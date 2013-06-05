@@ -15,7 +15,9 @@ class TopicsController < ApplicationController
                                           :unmute,
                                           :set_notifications,
                                           :move_posts,
-                                          :clear_pin]
+                                          :merge_topic,
+                                          :clear_pin,
+                                          :autoclose]
 
   before_filter :consider_user_for_promotion, only: :show
 
@@ -23,7 +25,10 @@ class TopicsController < ApplicationController
   caches_action :avatar, cache_path: Proc.new {|c| "#{c.params[:post_number]}-#{c.params[:topic_id]}" }
 
   def show
-    create_topic_view
+    opts = params.slice(:username_filters, :best_of, :page, :post_number, :posts_before, :posts_after, :best)
+    @topic_view = TopicView.new(params[:id] || params[:topic_id], current_user, opts)
+
+    raise Discourse::NotFound if @topic_view.posts.blank? && !(opts[:best].to_i > 0)
 
     anonymous_etag(@topic_view.topic) do
       redirect_to_correct_topic && return if slugs_do_not_match
@@ -97,6 +102,16 @@ class TopicsController < ApplicationController
     toggle_mute(false)
   end
 
+  def autoclose
+    requires_parameter(:auto_close_days)
+    @topic = Topic.where(id: params[:topic_id].to_i).first
+    guardian.ensure_can_moderate!(@topic)
+    @topic.auto_close_days = params[:auto_close_days]
+    @topic.auto_close_user = current_user
+    @topic.save
+    render nothing: true
+  end
+
   def destroy
     topic = Topic.where(id: params[:id]).first
     guardian.ensure_can_delete!(topic)
@@ -126,6 +141,20 @@ class TopicsController < ApplicationController
     render json: success_json
   end
 
+  def merge_topic
+    requires_parameters(:destination_topic_id)
+
+    topic = Topic.where(id: params[:topic_id]).first
+    guardian.ensure_can_move_posts!(topic)
+
+    dest_topic = topic.move_posts(current_user, topic.posts.pluck(:id), destination_topic_id: params[:destination_topic_id].to_i)
+    if dest_topic.present?
+      render json: {success: true, url: dest_topic.relative_url}
+    else
+      render json: {success: false}
+    end
+  end
+
   def move_posts
     requires_parameters(:post_ids)
 
@@ -142,7 +171,6 @@ class TopicsController < ApplicationController
     else
       render json: {success: false}
     end
-
   end
 
   def clear_pin
@@ -171,16 +199,11 @@ class TopicsController < ApplicationController
 
   private
 
-  def create_topic_view
-    opts = params.slice(:username_filters, :best_of, :page, :post_number, :posts_before, :posts_after, :best)
-    @topic_view = TopicView.new(params[:id] || params[:topic_id], current_user, opts)
-  end
-
   def toggle_mute(v)
     @topic = Topic.where(id: params[:topic_id].to_i).first
     guardian.ensure_can_see!(@topic)
 
-    @topic.toggle_mute(current_user, v)
+    @topic.toggle_mute(current_user)
     render nothing: true
   end
 

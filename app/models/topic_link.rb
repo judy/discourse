@@ -68,12 +68,12 @@ class TopicLink < ActiveRecord::Base
 
           added_urls << url
           TopicLink.create(post_id: post.id,
-                                 user_id: post.user_id,
-                                 topic_id: post.topic_id,
-                                 url: url,
-                                 domain: parsed.host || Discourse.current_hostname,
-                                 internal: internal,
-                                 link_topic_id: topic_id)
+                           user_id: post.user_id,
+                           topic_id: post.topic_id,
+                           url: url,
+                           domain: parsed.host || Discourse.current_hostname,
+                           internal: internal,
+                           link_topic_id: topic_id)
 
           # Create the reflection if we can
           if topic_id.present?
@@ -120,3 +120,28 @@ class TopicLink < ActiveRecord::Base
     end
   end
 end
+
+# == Schema Information
+#
+# Table name: topic_links
+#
+#  id            :integer          not null, primary key
+#  topic_id      :integer          not null
+#  post_id       :integer
+#  user_id       :integer          not null
+#  url           :string(500)      not null
+#  domain        :string(100)      not null
+#  internal      :boolean          default(FALSE), not null
+#  link_topic_id :integer
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  reflection    :boolean          default(FALSE)
+#  clicks        :integer          default(0), not null
+#  link_post_id  :integer
+#
+# Indexes
+#
+#  index_forum_thread_links_on_forum_thread_id                      (topic_id)
+#  index_forum_thread_links_on_forum_thread_id_and_post_id_and_url  (topic_id,post_id,url) UNIQUE
+#
+

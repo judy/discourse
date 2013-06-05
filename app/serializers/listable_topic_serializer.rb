@@ -1,9 +1,9 @@
 require_dependency 'age_words'
+require_dependency 'pinned_check'
 
 class ListableTopicSerializer < BasicTopicSerializer
 
   attributes :reply_count,
-             :posts_count,
              :highest_post_number,
              :image_url,
              :created_at,
@@ -16,7 +16,12 @@ class ListableTopicSerializer < BasicTopicSerializer
              :last_read_post_number,
              :unread,
              :new_posts,
-             :title
+             :title,
+             :pinned,
+             :excerpt,
+             :visible,
+             :closed,
+             :archived
 
   def age
     AgeWords.age_words(Time.now - (object.created_at || Time.now))
@@ -59,10 +64,23 @@ class ListableTopicSerializer < BasicTopicSerializer
   end
   alias :include_new_posts? :seen
 
+  def include_excerpt?
+    pinned
+  end
+
+  def excerpt
+    object.posts.by_post_number.first.try(:excerpt, 220, strip_links: true) || nil
+  end
+
+  def pinned
+    PinnedCheck.new(object, object.user_data).pinned?
+  end
+
   protected
 
     def unread_helper
       @unread_helper ||= Unread.new(object, object.user_data)
     end
+
 
 end

@@ -95,6 +95,49 @@ describe TopicsController do
     end
   end
 
+  context "merge_topic" do
+    it 'needs you to be logged in' do
+      lambda { xhr :post, :merge_topic, topic_id: 111, destination_topic_id: 345 }.should raise_error(Discourse::NotLoggedIn)
+    end
+
+    describe 'moving to a new topic' do
+      let!(:user) { log_in(:moderator) }
+      let(:p1) { Fabricate(:post, user: user) }
+      let(:topic) { p1.topic }
+
+      it "raises an error without destination_topic_id" do
+        lambda { xhr :post, :merge_topic, topic_id: topic.id }.should raise_error(Discourse::InvalidParameters)
+      end
+
+      it "raises an error when the user doesn't have permission to merge" do
+        Guardian.any_instance.expects(:can_move_posts?).returns(false)
+        xhr :post, :merge_topic, topic_id: 111, destination_topic_id: 345
+        response.should be_forbidden
+      end
+
+      let(:dest_topic) { Fabricate(:topic) }
+
+      context 'moves all the posts to the destination topic' do
+        let(:p2) { Fabricate(:post, user: user) }
+
+        before do
+          Topic.any_instance.expects(:move_posts).with(user, [p1.id], destination_topic_id: dest_topic.id).returns(topic)
+          xhr :post, :merge_topic, topic_id: topic.id, destination_topic_id: dest_topic.id
+        end
+
+        it "returns success" do
+          response.should be_success
+          result = ::JSON.parse(response.body)
+          result['success'].should be_true
+          result['url'].should be_present
+        end
+      end
+
+
+    end
+
+  end
+
   context 'similar_to' do
 
     let(:title) { 'this title is long enough to search for' }
@@ -239,12 +282,12 @@ describe TopicsController do
       end
 
       it "changes the user's starred flag when the parameter is present" do
-        Topic.any_instance.expects(:toggle_mute).with(@topic.user, true)
+        Topic.any_instance.expects(:toggle_mute).with(@topic.user)
         xhr :put, :mute, topic_id: @topic.id, starred: 'true'
       end
 
       it "removes the user's starred flag when the parameter is not true" do
-        Topic.any_instance.expects(:toggle_mute).with(@topic.user, false)
+        Topic.any_instance.expects(:toggle_mute).with(@topic.user)
         xhr :put, :unmute, topic_id: @topic.id, starred: 'false'
       end
 
@@ -512,6 +555,42 @@ describe TopicsController do
 
 
 
+    end
+
+  end
+
+  describe 'autoclose' do
+
+    it 'needs you to be logged in' do
+      lambda { xhr :put, :autoclose, topic_id: 99, auto_close_days: 3}.should raise_error(Discourse::NotLoggedIn)
+    end
+
+    it 'needs you to be an admin or mod' do
+      user = log_in
+      xhr :put, :autoclose, topic_id: 99, auto_close_days: 3
+      response.should be_forbidden
+    end
+
+    describe 'when logged in' do
+      before do
+        @admin = log_in(:admin)
+        @topic = Fabricate(:topic, user: @admin)
+      end
+
+      it "can set a topic's auto close time" do
+        Topic.any_instance.expects(:auto_close_days=).with { |arg| arg.to_i == 3 }
+        xhr :put, :autoclose, topic_id: @topic.id, auto_close_days: 3
+      end
+
+      it "can remove a topic's auto close time" do
+        Topic.any_instance.expects(:auto_close_days=).with(nil)
+        xhr :put, :autoclose, topic_id: @topic.id, auto_close_days: nil
+      end
+
+      it "sets the topic closer to the current user" do
+        Topic.any_instance.expects(:auto_close_user=).with(@admin)
+        xhr :put, :autoclose, topic_id: @topic.id, auto_close_days: nil
+      end
     end
 
   end

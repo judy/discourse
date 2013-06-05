@@ -24,13 +24,20 @@ describe PostAction do
       action = PostAction.act(codinghorror, post, PostActionType.types[:notify_moderators], "this is my special long message");
 
       posts = Post.joins(:topic)
-                  .select('posts.id, topics.subtype')
+                  .select('posts.id, topics.subtype, posts.topic_id')
                   .where('topics.archetype' => Archetype.private_message)
                   .to_a
 
       posts.count.should == 1
       action.related_post_id.should == posts[0].id.to_i
       posts[0].subtype.should == TopicSubtype.notify_moderators
+
+      # reply to PM should clear flag
+      p = PostCreator.new(mod, topic_id: posts[0].topic_id, raw: "This is my test reply to the user, it should clear flags")
+      p.create
+
+      action.reload
+      action.deleted_at.should_not be_nil
 
     end
 
@@ -115,18 +122,30 @@ describe PostAction do
   end
 
   describe 'when a user likes something' do
-    it 'should increase the post counts when a user likes' do
-      lambda {
-        PostAction.act(codinghorror, post, PostActionType.types[:like])
-        post.reload
-      }.should change(post, :like_count).by(1)
-    end
+    it 'should increase the `like_count` and `like_score` when a user likes something' do
+      PostAction.act(codinghorror, post, PostActionType.types[:like])
+      post.reload
+      post.like_count.should == 1
+      post.like_score.should == 1
+      post.topic.reload
+      post.topic.like_count.should == 1
 
-    it 'should increase the forum topic like count when a user likes' do
-      lambda {
-        PostAction.act(codinghorror, post, PostActionType.types[:like])
-        post.topic.reload
-      }.should change(post.topic, :like_count).by(1)
+      # When a staff member likes it
+      PostAction.act(moderator, post, PostActionType.types[:like])
+      post.reload
+      post.like_count.should == 2
+      post.like_score.should == 4
+
+      # Removing likes
+      PostAction.remove_act(codinghorror, post, PostActionType.types[:like])
+      post.reload
+      post.like_count.should == 1
+      post.like_score.should == 3
+
+      PostAction.remove_act(moderator, post, PostActionType.types[:like])
+      post.reload
+      post.like_count.should == 0
+      post.like_score.should == 0
     end
   end
 
@@ -147,6 +166,29 @@ describe PostAction do
   end
 
   describe 'flagging' do
+
+    context "flag_counts_for" do
+      it "returns the correct flag counts" do
+        post = Fabricate(:post)
+
+        SiteSetting.stubs(:flags_required_to_hide_post).returns(7)
+
+        # A post with no flags has 0 for flag counts
+        PostAction.flag_counts_for(post.id).should == [0, 0]
+
+        flag = PostAction.act(Fabricate(:evil_trout), post, PostActionType.types[:spam])
+        PostAction.flag_counts_for(post.id).should == [0, 1]
+
+        # If an admin flags the post, it is counted higher
+        admin = Fabricate(:admin)
+        PostAction.act(admin, post, PostActionType.types[:spam])
+        PostAction.flag_counts_for(post.id).should == [0, 8]
+
+        # If a flag is dismissed
+        PostAction.clear_flags!(post, admin)
+        PostAction.flag_counts_for(post.id).should == [8, 0]
+      end
+    end
 
     it 'does not allow you to flag stuff with 2 reasons' do
       post = Fabricate(:post)

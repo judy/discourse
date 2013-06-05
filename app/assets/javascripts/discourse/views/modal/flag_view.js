@@ -45,9 +45,9 @@ Discourse.FlagView = Discourse.ModalBodyView.extend({
     var _this = this;
 
     var action = this.get('selected');
-    var postAction = this.get('post.actionByName.' + (action.get('name_key'))); 
+    var postAction = this.get('post.actionByName.' + (action.get('name_key')));
 
-    var actionType = Discourse.get('site').postActionTypeById(this.get('postActionTypeId'));
+    var actionType = Discourse.Site.instance().postActionTypeById(this.get('postActionTypeId'));
     if (postAction) {
       postAction.act({
         message: action.get('message')

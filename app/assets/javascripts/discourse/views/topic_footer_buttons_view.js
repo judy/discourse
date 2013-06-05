@@ -2,7 +2,7 @@
   This view is used for rendering the buttons at the footer of the topic
 
   @class TopicFooterButtonsView
-  @extends Discourse.View
+  @extends Ember.ContainerView
   @namespace Discourse
   @module Discourse
 **/
@@ -19,7 +19,7 @@ Discourse.TopicFooterButtonsView = Ember.ContainerView.extend({
   createButtons: function() {
     var topic;
     topic = this.get('topic');
-    if (Discourse.get('currentUser')) {
+    if (Discourse.User.current()) {
       if (!topic.get('isPrivateMessage')) {
 
         // We hide some controls from private messages
@@ -83,7 +83,7 @@ Discourse.TopicFooterButtonsView = Ember.ContainerView.extend({
           // Hide the button if it becomes unpinned
           unpinned: function() {
             // When not logged in don't show the button
-            if (!Discourse.get('currentUser')) return 'hidden'
+            if (!Discourse.User.current()) return 'hidden'
 
             return this.get('controller.pinned') ? null : 'hidden';
           }.property('controller.pinned'),

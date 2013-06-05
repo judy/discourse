@@ -1,6 +1,9 @@
 # encoding: utf-8
 # This file contains content for the client portion of Discourse, sent out
 # to the Javascript app.
+#
+# To validate this YAML file after you change it, please paste it into
+# http://yamllint.com/
 
 en:
   js:
@@ -32,6 +35,19 @@ en:
     now: "just now"
     read_more: 'read more'
 
+    in_n_seconds:
+      one: "in 1 second"
+      other: "in {{count}} seconds"
+    in_n_minutes:
+      one: "in 1 minute"
+      other: "in {{count}} minutes"
+    in_n_hours:
+      one: "in 1 hour"
+      other: "in {{count}} hours"
+    in_n_days:
+      one: "in 1 day"
+      other: "in {{count}} days"
+
     suggested_topics:
       title: "Suggested Topics"
 
@@ -53,7 +69,7 @@ en:
     choose_topic:
       none_found: "No topics found."
       title:
-        search: "Search for a Topic:"
+        search: "Search for a Topic by name, url or id:"
         placeholder: "type the topic title here"
 
     user_action:
@@ -249,7 +265,7 @@ en:
     best_of:
       title: "Best Of"
       enabled_description: You are currently viewing the "Best Of" view of this topic.
-      description: "There are <b>{{count}}</b> posts in this topic. That's a lot! Would you like to save time by switching your view to show only the posts with the most interactions and responses?"
+      description: "There are <b>{{count}}</b> posts in this topic. That's a lot! Would you like to save time by showing only the best posts?"
       enable: 'Switch to "Best Of" view'
       disable: 'Cancel "Best Of"'
 
@@ -300,6 +316,9 @@ en:
       facebook:
         title: "with Facebook"
         message: "Authenticating with Facebook (make sure pop up blockers are not enabled)"
+      cas:
+        title: "Log In with CAS"
+        message: "Authenticating with CAS (make sure pop up blockers are not enabled)"
       yahoo:
         title: "with Yahoo"
         message: "Authenticating with Yahoo (make sure pop up blockers are not enabled)"
@@ -321,6 +340,14 @@ en:
       min_length:
         need_more_for_title: "{{n}} to go for the title"
         need_more_for_reply: "{{n}} to go for the reply"
+
+      error:
+        title_missing: "Title is required."
+        title_too_short: "Title must be at least {{min}} characters long."
+        title_too_long: "Title must be less than {{max}} characters long."
+        post_missing: "Post can't be empty."
+        post_length: "Post must be at least {{min}} characters long."
+        category_missing: "You must choose a category."
 
       save_edit: "Save Edit"
       reply_original: "Reply on Original Topic"
@@ -370,6 +397,10 @@ en:
       help: "Markdown Editing Help"
       toggler: "hide or show the composer panel"
 
+      admin_options_title: "Optional staff settings for this topic"
+      auto_close_label: "Auto-close topic after:"
+      auto_close_units: "days"
+
     notifications:
       title: "notifications of @name mentions, replies to your posts and topics, private messages, etc"
       none: "You have no notifications right now."
@@ -403,6 +434,10 @@ en:
       placeholder: "type your search terms here"
       no_results: "No results found."
       searching: "Searching ..."
+
+      prefer:
+        user: "search will prefer results by @{{username}}"
+        category: "search will prefer results in {{category}}"
 
     site_map: "go to another topic list or category"
     go_back: 'go back'
@@ -479,6 +514,12 @@ en:
       jump_reply_down: jump to later reply
       deleted: "The topic has been deleted"
 
+      auto_close_notice: "This topic will automatically close %{timeLeft}."
+      auto_close_title: 'Auto-Close Settings'
+      auto_close_save: "Save"
+      auto_close_cancel: "Cancel"
+      auto_close_remove: "Don't Auto-Close This Topic"
+
       progress:
         title: topic progress
         jump_top: jump to first post
@@ -516,6 +557,7 @@ en:
         delete: "Delete Topic"
         open: "Open Topic"
         close: "Close Topic"
+        auto_close: "Auto Close"
         unpin: "Un-Pin Topic"
         pin: "Pin Topic"
         unarchive: "Unarchive Topic"
@@ -523,7 +565,7 @@ en:
         invisible: "Make Invisible"
         visible: "Make Visible"
         reset_read: "Reset Read Data"
-        multi_select: "Toggle Multi-Select"
+        multi_select: "Select for Merge/Split"
         convert_to_topic: "Convert to Regular Topic"
 
       reply:
@@ -577,32 +619,28 @@ en:
           other: "of {{count}} in the topic"
         cancel: "Show all posts in this topic again."
 
-      move_selected:
-        title: "Move Selected Posts"
-        error: "Sorry, there was an error moving those posts."
+      split_topic:
+        title: "Split Topic"
+        action: "split topic"
+        topic_name: "New Topic Name:"
+        error: "There was an error splitting that topic."
         instructions:
-          one: "How would you like to move this post?"
-          other: "How would you like to move the <b>{{count}}</b> posts you've created?"
+          one: "You are about to create a new topic and populate it with the post you've selected."
+          other: "You are about to create a new topic and populate it with the <b>{{count}}</b> posts you've selected."
 
-        new_topic:
-          title: "Move Selected Posts to a New Topic"
-          topic_name: "New Topic Name:"
-          instructions:
-            one: "You are about to create a new topic and populate it with the post you've selected."
-            other: "You are about to create a new topic and populate it with the <b>{{count}}</b> posts you've selected."
-
-        existing_topic:
-          title: "Move Selected Posts to an Existing Topic"
-          instructions:
-            one: "Please choose the topic you'd like to move that post to."
-            other: "Please choose the topic you'd like to move those <b>{{count}}</b> posts to."
+      merge_topic:
+        title: "Merge Topic"
+        action: "merge topic"
+        error: "There was an error merging that topic."
+        instructions:
+          one: "Please choose the topic you'd like to move that post to."
+          other: "Please choose the topic you'd like to move those <b>{{count}}</b> posts to."
 
       multi_select:
         select: 'select'
         selected: 'selected ({{count}})'
         delete: delete selected
         cancel: cancel selecting
-        move: move selected
         description:
           one: You have selected <b>1</b> post.
           other: "You have selected <b>{{count}}</b> posts."
@@ -755,6 +793,8 @@ en:
       edit_long: "Edit Category"
       edit_uncategorized: "Edit Uncategorized"
       view: 'View Topics in Category'
+      general: 'General'
+      settings: 'Settings'
       delete: 'Delete Category'
       create: 'Create Category'
       save: 'Save Category'
@@ -780,6 +820,7 @@ en:
       add_group: "Add Group"
       security: "Security"
       allowed_groups: "Allowed Groups:"
+      auto_close_label: "Auto-close topics after:"
 
 
     flagging:
@@ -952,7 +993,7 @@ en:
         about: "Site Customization allow you to modify stylesheets and headers on the site. Choose or add one to start editing."
 
       email_logs:
-        title: "Email Logs"
+        title: "Email"
         sent_at: "Sent At"
         email_type: "Email Type"
         to_address: "To Address"
@@ -1037,10 +1078,10 @@ en:
 
       site_content:
         none: "Choose a type of content to begin editing."
-        title: 'Site Content'
+        title: 'Content'
         edit: "Edit Site Content"
 
       site_settings:
         show_overriden: 'Only show overridden'
-        title: 'Site Settings'
+        title: 'Settings'
         reset: 'reset to default'

@@ -1,4 +1,4 @@
-{{#unless controller.loading}}
+{{#unless loading}}
   {{#if loaded}}
     <div class='contents'>
       {{#if topics.length}}
@@ -10,10 +10,10 @@
         </button>
       {{/if}}
 
-      <table id='topic-list' {{bindAttr class="controller.category:filter-category"}}>
+      <table id='topic-list'>
         <thead>
         <tr>
-          {{#if Discourse.currentUser}}
+          {{#if currentUser}}
             <th>&nbsp;</th>
           {{/if}}
           <th>
@@ -28,13 +28,13 @@
         </tr>
         </thead>
 
-        {{#if view.rollUp}}
+        {{#if rollUp}}
           <tbody>
             <tr>
               <td colspan="9">
                 <div class='alert alert-info'>
-                  {{countI18n new_topics_inserted countBinding="view.insertedCount"}}
-                  <a href='#' {{action showInserted target="controller"}}>{{i18n show_new_topics}}</a>
+                  {{countI18n new_topics_inserted countBinding="insertedCount"}}
+                  <a href='#' {{action showInserted}}>{{i18n show_new_topics}}</a>
                 </div>
               </td>
             </tr>
@@ -54,16 +54,16 @@
     </div>
 
     <footer id='topic-list-bottom'>
-      {{#if view.loading}}
+      {{#if loadingMore}}
         <div class='topics-loading'>{{i18n topic.loading_more}}</div>
       {{/if}}
     </footer>
 
     <h3>
-      {{view.footerMessage}}
-      {{#if view.allLoaded}}
-        {{#if controller.latest}}
-          {{#if view.canCreateTopic}}
+      {{footerMessage}}
+      {{#if allLoaded}}
+        {{#if latest}}
+          {{#if canCreateTopic}}
             <a href='#' {{action createTopic}}>{{i18n topic.suggest_create_topic}}</a>
           {{/if}}
         {{else}}

@@ -8,10 +8,14 @@
 **/
 Discourse.LoginView = Discourse.ModalBodyView.extend({
   templateName: 'modal/login',
-  siteBinding: 'Discourse.site',
   title: Em.String.i18n('login.title'),
   authenticate: null,
   loggingIn: false,
+
+
+  site: function() {
+    return Discourse.Site.instance();
+  }.property(),
 
   showView: function(view) {
     return this.get('controller').show(view);
@@ -31,6 +35,7 @@ Discourse.LoginView = Discourse.ModalBodyView.extend({
   hasAtLeastOneLoginButton: function() {
     return Discourse.SiteSettings.enable_google_logins ||
            Discourse.SiteSettings.enable_facebook_logins ||
+           Discourse.SiteSettings.enable_cas_logins ||
            Discourse.SiteSettings.enable_twitter_logins ||
            Discourse.SiteSettings.enable_yahoo_logins ||
            Discourse.SiteSettings.enable_github_logins ||
@@ -102,6 +107,14 @@ Discourse.LoginView = Discourse.ModalBodyView.extend({
     return window.open(Discourse.getURL("/auth/facebook"), "_blank", "menubar=no,status=no,height=400,width=800,left=" + left + ",top=" + top);
   },
 
+  casLogin: function() {
+    var left, top;
+    this.set('authenticate', 'cas');
+    left = this.get('lastX') - 400;
+    top = this.get('lastY') - 200;
+    return window.open("/auth/cas", "_blank", "menubar=no,status=no,height=400,width=800,left=" + left + ",top=" + top);
+   },
+
   openidLogin: function(provider) {
     var left = this.get('lastX') - 400;
     var top = this.get('lastY') - 200;
@@ -161,7 +174,7 @@ Discourse.LoginView = Discourse.ModalBodyView.extend({
     this.set('loginPassword', $('#hidden-login-form input[name=password]').val());
 
     var loginView = this;
-    Em.run.next(function() {
+    Em.run.schedule('afterRender', function() {
       $('#login-account-password').keydown(function(e) {
         if (e.keyCode === 13) {
           loginView.login();
