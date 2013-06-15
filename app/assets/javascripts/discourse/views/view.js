@@ -9,13 +9,12 @@
 **/
 Discourse.View = Ember.View.extend(Discourse.Presence, {});
 
-
 Discourse.View.reopenClass({
 
   /**
     Register a view helper for ease of use
 
-    @method registerHElper
+    @method registerHelper
     @param {String} helperName the name of the helper
     @param {Ember.View} helperClass the view that will be inserted by the helper
   **/

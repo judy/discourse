@@ -15,7 +15,7 @@ Discourse.Group = Discourse.Model.extend({
       var group = this;
       Discourse.ajax('/admin/groups/' + this.get('id') + '/users').then(function(payload){
         var users = Em.A()
-        payload.each(function(user){
+        _.each(payload,function(user){
           users.addObject(Discourse.User.create(user));
         });
         group.set('users', users)
@@ -28,7 +28,7 @@ Discourse.Group = Discourse.Model.extend({
     var users = this.get('users');
     var usernames = "";
     if(users) {
-      usernames = $.map(users, function(user){
+      usernames = _.map(users, function(user){
         return user.get('username');
       }).join(',')
     }
@@ -81,8 +81,8 @@ Discourse.Group.reopenClass({
   findAll: function(){
     var list = Discourse.SelectableArray.create();
 
-    Discourse.ajax("/admin/groups").then(function(groups){
-      groups.each(function(group){
+    Discourse.ajax("/admin/groups.json").then(function(groups){
+      _.each(groups,function(group){
         list.addObject(Discourse.Group.create(group));
       });
     });

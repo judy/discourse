@@ -7,7 +7,7 @@ class SearchController < ApplicationController
   end
 
   def query
-    requires_parameter(:term)
+    params.require(:term)
 
     search_args = {guardian: guardian}
     search_args[:type_filter] = params[:type_filter] if params[:type_filter].present?
@@ -22,7 +22,7 @@ class SearchController < ApplicationController
       # A user is found by username
       context_obj = nil
       if search_context[:type] == 'user'
-        context_obj = klass.where(username: params[:search_context][:id]).first
+        context_obj = klass.where(username_lower: params[:search_context][:id].downcase).first
       else
         context_obj = klass.where(id: params[:search_context][:id]).first
       end
@@ -34,7 +34,5 @@ class SearchController < ApplicationController
     search = Search.new(params[:term], search_args.symbolize_keys)
     render_json_dump(search.execute.as_json)
   end
-
-
 
 end

@@ -81,12 +81,12 @@ module PrettyText
     @ctx["helpers"] = Helpers.new
 
     ctx_load( "app/assets/javascripts/external/md5.js",
+              "app/assets/javascripts/external/lodash.js",
               "app/assets/javascripts/external/Markdown.Converter.js",
               "app/assets/javascripts/external/twitter-text-1.5.0.js",
               "lib/headless-ember.js",
               "app/assets/javascripts/external/rsvp.js",
-              Rails.configuration.ember.handlebars_location,
-              "app/assets/javascripts/external_production/sugar-1.3.5.js")
+              Rails.configuration.ember.handlebars_location)
 
     @ctx.eval("var Discourse = {}; Discourse.SiteSettings = #{SiteSetting.client_settings_json};")
     @ctx.eval("var window = {}; window.devicePixelRatio = 2;") # hack to make code think stuff is retina
@@ -213,17 +213,18 @@ module PrettyText
   end
 
   def self.extract_links(html)
-    doc = Nokogiri::HTML.fragment(html)
     links = []
-    doc.css("a").each do |l|
-      links << l.attributes["href"].to_s
-    end
-
+    doc = Nokogiri::HTML.fragment(html)
+    # remove href inside quotes
+    doc.css("aside.quote a").each { |l| l["href"] = "" }
+    # extract all links from the post
+    doc.css("a").each { |l| links << l["href"] unless l["href"].empty? }
+    # extract links to quotes
     doc.css("aside.quote").each do |a|
-      topic_id = a.attributes['data-topic']
+      topic_id = a['data-topic']
 
       url = "/t/topic/#{topic_id}"
-      if post_number = a.attributes['data-post']
+      if post_number = a['data-post']
         url << "/#{post_number}"
       end
 
@@ -236,6 +237,15 @@ module PrettyText
 
   def self.excerpt(html, max_length, options={})
     ExcerptParser.get_excerpt(html, max_length, options)
+  end
+
+  def self.strip_links(string)
+    return string if string.blank?
+
+    # If the user is not basic, strip links from their bio
+    fragment = Nokogiri::HTML.fragment(string)
+    fragment.css('a').each {|a| a.replace(a.text) }
+    fragment.to_html
   end
 
   protected

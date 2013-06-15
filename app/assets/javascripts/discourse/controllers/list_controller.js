@@ -15,15 +15,15 @@ Discourse.ListController = Discourse.Controller.extend({
   availableNavItems: function() {
     var summary = this.get('filterSummary');
     var loggedOn = !!Discourse.User.current();
+
     return Discourse.SiteSettings.top_menu.split("|").map(function(i) {
       return Discourse.NavItem.fromText(i, {
-        loggedOn: loggedOn,
-        countSummary: summary
+        loggedOn: loggedOn
       });
     }).filter(function(i) {
       return i !== null;
     });
-  }.property('filterSummary'),
+  }.property(),
 
   /**
     Load a list based on a filter
@@ -36,6 +36,8 @@ Discourse.ListController = Discourse.Controller.extend({
     var listController = this;
     this.set('loading', true);
 
+    var trackingState = Discourse.TopicTrackingState.current();
+
     if (filterMode === 'categories') {
       return Discourse.CategoryList.list(filterMode).then(function(items) {
         listController.setProperties({
@@ -46,6 +48,10 @@ Discourse.ListController = Discourse.Controller.extend({
           draft_key: items.draft_key,
           draft_sequence: items.draft_sequence
         });
+        if(trackingState) {
+          trackingState.sync(items, filterMode);
+          trackingState.trackIncoming(filterMode);
+        }
         return items;
       });
     }
@@ -63,7 +69,11 @@ Discourse.ListController = Discourse.Controller.extend({
         draft: items.draft,
         draft_key: items.draft_key,
         draft_sequence: items.draft_sequence
-      })
+      });
+      if(trackingState) {
+        trackingState.sync(items, filterMode);
+        trackingState.trackIncoming(filterMode);
+      }
       return items;
     });
   },
@@ -92,11 +102,6 @@ Discourse.ListController = Discourse.Controller.extend({
     });
   },
 
-  createCategory: function() {
-    var _ref;
-    return (_ref = this.get('controllers.modal')) ? _ref.show(Discourse.EditCategoryView.create()) : void 0;
-  },
-
   canEditCategory: function() {
     if( this.present('category') ) {
       var u = Discourse.User.current();
@@ -104,12 +109,7 @@ Discourse.ListController = Discourse.Controller.extend({
     } else {
       return false;
     }
-  }.property('category'),
-
-  editCategory: function() {
-    this.get('controllers.modal').show(Discourse.EditCategoryView.create({ category: this.get('category') }));
-    return false;
-  }
+  }.property('category')
 
 });
 

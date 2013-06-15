@@ -9,6 +9,15 @@
 **/
 Discourse.ListTopicsView = Discourse.View.extend(Discourse.Scrolling, {
   templateName: 'list/topics',
+  categoryBinding: 'controller.controllers.list.category',
+  canCreateTopicBinding: 'controller.controllers.list.canCreateTopic',
+  listBinding: 'controller.model',
+  loadedMore: false,
+  currentTopicId: null,
+
+  topicTrackingState: function() {
+    return Discourse.TopicTrackingState.current();
+  }.property(),
 
   willDestroyElement: function() {
     this.unbindScrolling();
@@ -36,8 +45,20 @@ Discourse.ListTopicsView = Discourse.View.extend(Discourse.Scrolling, {
     this.set('eyeline', eyeline);
   },
 
+  showTable: function() {
+    var topics = this.get('list.topics');
+    if(topics) {
+      return this.get('list.topics').length > 0 || this.get('topicTrackingState.hasIncoming');
+    }
+  }.property('list.topics.@each','topicTrackingState.hasIncoming'),
+
+  updateTitle: function(){
+    Discourse.notifyTitle(this.get('topicTrackingState.incomingCount'));
+  }.observes('topicTrackingState.incomingCount'),
+
   loadMore: function() {
     var listTopicsView = this;
+    Discourse.notifyTitle(0);
     listTopicsView.get('controller').loadMore().then(function (hasMoreResults) {
       Em.run.schedule('afterRender', function() {
         listTopicsView.saveScrollPos();

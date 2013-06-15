@@ -2,7 +2,6 @@ class UserAction < ActiveRecord::Base
   belongs_to :user
   belongs_to :target_post, class_name: "Post"
   belongs_to :target_topic, class_name: "Topic"
-  attr_accessible :acting_user_id, :action_type, :target_topic_id, :target_post_id, :target_user_id, :user_id
 
   validates_presence_of :action_type
   validates_presence_of :user_id
@@ -34,6 +33,13 @@ class UserAction < ActiveRecord::Base
     STAR,
     EDIT
   ].each_with_index.to_a.flatten]
+
+  # note, this is temporary until we upgrade to rails 4
+  #  in rails 4 types are mapped correctly so you dont end up
+  #  having strings where you would expect bools
+  class UserActionRow < OpenStruct
+    include ActiveModel::SerializerSupport
+  end
 
 
   def self.stats(user_id, guardian)
@@ -78,7 +84,7 @@ SQL
     # The weird thing is that target_post_id can be null, so it makes everything
     #  ever so more complex. Should we allow this, not sure.
 
-    builder = UserAction.sql_builder("
+    builder = SqlBuilder.new("
 SELECT
   t.title, a.action_type, a.created_at, t.id topic_id,
   a.user_id AS target_user_id, au.name AS target_name, au.username AS target_username,
@@ -86,7 +92,9 @@ SELECT
   p.reply_to_post_number,
   pu.email ,pu.username, pu.name, pu.id user_id,
   u.email acting_email, u.username acting_username, u.name acting_name, u.id acting_user_id,
-  coalesce(p.cooked, p2.cooked) cooked
+  coalesce(p.cooked, p2.cooked) cooked,
+  CASE WHEN coalesce(p.deleted_at, p2.deleted_at, t.deleted_at) IS NULL THEN false ELSE true END deleted,
+  p.hidden
 FROM user_actions as a
 JOIN topics t on t.id = a.target_topic_id
 LEFT JOIN posts p on p.id = a.target_post_id
@@ -114,7 +122,7 @@ LEFT JOIN categories c on c.id = t.category_id
         .limit(limit.to_i)
     end
 
-    builder.exec.to_a
+    builder.map_exec(UserActionRow)
   end
 
   # slightly different to standard stream, it collapses replies
@@ -123,7 +131,7 @@ LEFT JOIN categories c on c.id = t.category_id
     user_id = opts[:user_id]
     return [] unless opts[:guardian].can_see_private_messages?(user_id)
 
-    builder = UserAction.sql_builder("
+    builder = SqlBuilder.new("
 SELECT
   t.title, :action_type action_type, p.created_at, t.id topic_id,
   :user_id AS target_user_id, au.name AS target_name, au.username AS target_username,
@@ -131,7 +139,9 @@ SELECT
   p.reply_to_post_number,
   pu.email ,pu.username, pu.name, pu.id user_id,
   pu.email acting_email, pu.username acting_username, pu.name acting_name, pu.id acting_user_id,
-  p.cooked
+  p.cooked,
+  CASE WHEN coalesce(p.deleted_at, t.deleted_at) IS NULL THEN false ELSE true END deleted,
+  p.hidden
 
 FROM topics t
 JOIN posts p ON p.topic_id =  t.id and p.post_number = t.highest_post_number
@@ -148,7 +158,7 @@ ORDER BY p.created_at desc
     builder
       .offset((opts[:offset] || 0).to_i)
       .limit((opts[:limit] || 60).to_i)
-      .exec(user_id: user_id, action_type: action_type).to_a
+      .map_exec(UserActionRow, user_id: user_id, action_type: action_type)
   end
 
   def self.log_action!(hash)

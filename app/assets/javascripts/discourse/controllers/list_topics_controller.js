@@ -8,32 +8,12 @@
 **/
 Discourse.ListTopicsController = Discourse.ObjectController.extend({
   needs: ['list', 'composer', 'modal'],
-
   rankDetailsVisible: false,
 
   // If we're changing our channel
   previousChannel: null,
 
   latest: Ember.computed.equal('filter', 'latest'),
-
-  filterModeChanged: function() {
-    // Unsubscribe from a previous channel if necessary
-    var previousChannel = this.get('previousChannel');
-    if (previousChannel) {
-      Discourse.MessageBus.unsubscribe("/" + previousChannel);
-      this.set('previousChannel', null);
-    }
-
-    var filterMode = this.get('controllers.list.filterMode');
-    if (!filterMode) return;
-
-    var listTopicsController = this;
-    Discourse.MessageBus.subscribe("/" + filterMode, function(data) {
-      return listTopicsController.get('content').insert(data);
-    });
-    this.set('previousChannel', filterMode);
-
-  }.observes('controllers.list.filterMode'),
 
   draftLoaded: function() {
     var draft = this.get('content.draft');
@@ -61,25 +41,17 @@ Discourse.ListTopicsController = Discourse.ObjectController.extend({
     this.toggleProperty('rankDetailsVisible');
   },
 
-  // Show rank details
-  showRankDetails: function(topic) {
-    var modalController = this.get('controllers.modal');
-    if (modalController) {
-      modalController.show(Discourse.TopicRankDetailsView.create({ topic: topic }));
-    }
-  },
-
   createTopic: function() {
     this.get('controllers.list').createTopic();
   },
 
   // Show newly inserted topics
   showInserted: function(e) {
-    // Move inserted into topics
-    this.get('topics').unshiftObjects(this.get('inserted'));
+    var tracker = Discourse.TopicTrackingState.current();
 
-    // Clear inserted
-    this.set('inserted', Em.A());
+    // Move inserted into topics
+    this.get('content').loadBefore(tracker.get('newIncoming'));
+    tracker.resetTracking();
     return false;
   },
 
@@ -107,16 +79,6 @@ Discourse.ListTopicsController = Discourse.ObjectController.extend({
       }
     }
   }.property('allLoaded', 'topics.length'),
-
-  insertedCount: function() {
-    var insertedLength = this.get('inserted.length');
-    if (!insertedLength) return 0;
-    return insertedLength;
-  }.property('inserted.length'),
-
-  rollUp: function() {
-    return this.get('insertedCount') > Discourse.SiteSettings.new_topics_rollup;
-  }.property('insertedCount'),
 
   loadMore: function() {
     this.set('loadingMore', true);
