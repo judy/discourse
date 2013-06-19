@@ -71,6 +71,7 @@ class SiteSetting < ActiveRecord::Base
   setting(:queue_jobs, !Rails.env.test?)
   setting(:crawl_images, !Rails.env.test?)
   setting(:max_image_width, 690)
+  setting(:create_thumbnails, false)
   client_setting(:category_featured_topics, 6)
   setting(:topics_per_page, 30)
   setting(:posts_per_page, 20)
@@ -78,7 +79,6 @@ class SiteSetting < ActiveRecord::Base
   setting(:active_user_rate_limit_secs, 60)
   setting(:previous_visit_timeout_hours, 1)
   client_setting(:favicon_url, '/assets/default-favicon.ico')
-  client_setting(:dynamic_favicon, false)
   setting(:apple_touch_icon_url, '/assets/default-apple-touch-icon.png')
 
   setting(:ninja_edit_window, 5.minutes.to_i)
@@ -190,7 +190,13 @@ class SiteSetting < ActiveRecord::Base
 
   # Reply by Email Settings
   setting(:reply_by_email_enabled, false)
-  setting(:reply_by_email_address, nil)
+  setting(:reply_by_email_address, '')
+
+  setting(:pop3s_polling_enabled, false)
+  setting(:pop3s_polling_host, '')
+  setting(:pop3s_polling_port, 995)
+  setting(:pop3s_polling_username, '')
+  setting(:pop3s_polling_password, '')
 
   # Entropy checks
   setting(:title_min_entropy, 10)
@@ -215,6 +221,8 @@ class SiteSetting < ActiveRecord::Base
   client_setting(:topic_views_heat_low,    1000)
   client_setting(:topic_views_heat_medium, 2000)
   client_setting(:topic_views_heat_high,   5000)
+
+  setting(:minimum_topics_similar, 50)
 
   def self.generate_api_key!
     self.api_key = SecureRandom.hex(32)

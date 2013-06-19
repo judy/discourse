@@ -41,7 +41,6 @@ describe CookedPostProcessor do
       before do
         @topic = Fabricate(:topic)
         @post = Fabricate.build(:post_with_image_url, topic: @topic, user: @topic.user)
-        ImageSorcery.any_instance.stubs(:convert).returns(false)
         @cpp = CookedPostProcessor.new(@post, image_sizes: {'http://www.forumwarz.com/images/header/logo.png' => {'width' => 111, 'height' => 222}})
         @cpp.expects(:get_size).returns([111,222])
       end
@@ -58,14 +57,29 @@ describe CookedPostProcessor do
 
     end
 
+    context 'with uploaded images in the post' do
+      before do
+        @topic = Fabricate(:topic)
+        @post = Fabricate(:post_with_uploads, topic: @topic, user: @topic.user)
+        @cpp = CookedPostProcessor.new(@post)
+        @cpp.expects(:get_upload_from_url).returns(Fabricate(:upload))
+        @cpp.expects(:get_size).returns([100,200])
+      end
+
+      it "keeps reverse index up to date" do
+        @cpp.post_process_images
+        @post.uploads.reload
+        @post.uploads.count.should == 1
+      end
+
+    end
+
     context 'with unsized images in the post' do
       let(:user) { Fabricate(:user) }
       let(:topic) { Fabricate(:topic, user: user) }
 
       before do
         FastImage.stubs(:size).returns([123, 456])
-        ImageSorcery.any_instance.stubs(:convert).returns(false)
-        CookedPostProcessor.any_instance.expects(:image_dimensions).returns([123, 456])
         creator = PostCreator.new(user, raw: Fabricate.build(:post_with_images).raw, topic_id: topic.id)
         @post = creator.create
       end
@@ -89,7 +103,6 @@ describe CookedPostProcessor do
       let(:processor) { CookedPostProcessor.new(post) }
 
       before do
-        ImageSorcery.any_instance.stubs(:convert).returns(false)
         processor.post_process_images
       end
 
@@ -149,6 +162,19 @@ describe CookedPostProcessor do
         cpp.image_dimensions(@url)
       end
     end
+  end
+
+  context 'get_image_uri' do
+
+    it "returns nil unless the scheme is either http or https" do
+      cpp.get_image_uri("http://domain.com").should   == URI.parse("http://domain.com")
+      cpp.get_image_uri("https://domain.com").should  == URI.parse("https://domain.com")
+      cpp.get_image_uri("ftp://domain.com").should    == nil
+      cpp.get_image_uri("ftps://domain.com").should   == nil
+      cpp.get_image_uri("//domain.com").should        == nil
+      cpp.get_image_uri("/tmp/image.png").should      == nil
+    end
+
   end
 
 end

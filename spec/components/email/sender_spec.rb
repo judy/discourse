@@ -49,9 +49,21 @@ describe Email::Sender do
       Then { expect(email_log.user_id).to be_blank }
     end
 
+    context "email log with a post id and topic id" do
+      before do
+        message.header['X-Discourse-Post-Id'] = 3344
+        message.header['X-Discourse-Topic-Id'] = 5577
+      end
+
+      let(:email_log) { EmailLog.last }
+      When { email_sender.send }
+      Then { expect(email_log.post_id).to eq(3344) }
+      Then { expect(email_log.topic_id).to eq(5577) }
+    end
+
     context "email log with a reply key" do
       before do
-        message.header['Discourse-Reply-Key'] = reply_key
+        message.header['X-Discourse-Reply-Key'] = reply_key
       end
 
       let(:email_log) { EmailLog.last }

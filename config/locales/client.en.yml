@@ -172,6 +172,8 @@ en:
       bio: "About me"
       invited_by: "Invited By"
       trust_level: "Trust Level"
+      notifications: "Notifications"
+      dynamic_favicon: "Show incoming message notifications on favicon"
       external_links_in_new_tab: "Open all external links in a new tab"
       enable_quoting: "Enable quote reply for highlighted text"
 
@@ -549,8 +551,12 @@ en:
       not_found:
         title: "Topic not found"
         description: "Sorry, we couldn't find that topic. Perhaps it was removed by a moderator?"
-      unread_posts: "you have {{unread}} unread old posts in this topic"
-      new_posts: "there are {{new_posts}} new posts in this topic since you last read it"
+      unread_posts:
+        one: "you have 1 unread old post in this topic"
+        other: "you have {{count}} unread old posts in this topic"
+      new_posts:
+        one: "there is 1 new post in this topic since you last read it"
+        other: "there are {{count}} new posts in this topic since you last read it"
 
       likes:
         one: "there is 1 like in this topic"
@@ -756,7 +762,6 @@ en:
         delete: "delete this post"
         undelete: "undelete this post"
         share: "share a link to this post"
-        bookmark: "bookmark this post to your user page"
         more: "More"
 
       actions:
@@ -1037,11 +1042,32 @@ en:
         view_message: "view message"
         no_results: "There are no flags."
 
+        summary:
+          action_type_3:
+            one: "off-topic"
+            other: "off-topic x{{count}}"
+          action_type_4:
+            one: "inappropriate"
+            other: "inappropriate x{{count}}"
+          action_type_6:
+            one: "custom"
+            other: "custom x{{count}}"
+            one: "spam"
+            other: "spam x{{count}}"
+          action_type_7:
+            one: "custom"
+            other: "custom x{{count}}"
+          action_type_8:
+            one: "spam"
+            other: "spam x{{count}}"
+
       groups:
         title: "Groups"
         edit: "Edit Groups"
         selector_placeholder: "add users"
         name_placeholder: "Group name, no spaces, same as username rule"
+        about: "Edit your group membership and names here"
+        can_not_edit_automatic: "Automatic group membership is determined automatically, administer users to assign roles and trust levels"
 
       api:
         title: "API"

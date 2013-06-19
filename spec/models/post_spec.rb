@@ -2,11 +2,6 @@ require 'spec_helper'
 require_dependency 'post_destroyer'
 
 describe Post do
-
-  before do
-    ImageSorcery.any_instance.stubs(:convert).returns(false)
-  end
-
   # Help us build a post with a raw body
   def post_with_body(body, user=nil)
     args = post_args.merge(raw: body)
@@ -26,7 +21,8 @@ describe Post do
   it { should have_many :post_replies }
   it { should have_many :replies }
 
-  it { should have_and_belong_to_many :upload }
+  it { should have_many :post_uploads }
+  it { should have_many :uploads }
 
   it { should rate_limit }
 
@@ -421,8 +417,8 @@ describe Post do
       post.raw_hash.should == post_with_body(" thisis ourt est postbody").raw_hash
     end
 
-    it "returns the same hash even with different text case" do
-      post.raw_hash.should == post_with_body("THIS is OUR TEST post BODy").raw_hash
+    it "returns a different value with different text case" do
+      post.raw_hash.should_not == post_with_body("THIS is OUR TEST post BODy").raw_hash
     end
   end
 

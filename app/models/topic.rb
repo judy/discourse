@@ -270,7 +270,8 @@ class Topic < ActiveRecord::Base
   def self.reset_highest(topic_id)
     result = exec_sql "UPDATE topics
                         SET highest_post_number = (SELECT COALESCE(MAX(post_number), 0) FROM posts WHERE topic_id = :topic_id AND deleted_at IS NULL),
-                            posts_count = (SELECT count(*) FROM posts WHERE deleted_at IS NULL AND topic_id = :topic_id)
+                            posts_count = (SELECT count(*) FROM posts WHERE deleted_at IS NULL AND topic_id = :topic_id),
+                            last_posted_at = (SELECT MAX(created_at) FROM POSTS WHERE topic_id = :topic_id AND deleted_at IS NULL)
                         WHERE id = :topic_id
                         RETURNING highest_post_number", topic_id: topic_id
     highest_post_number = result.first['highest_post_number'].to_i
@@ -369,31 +370,36 @@ class Topic < ActiveRecord::Base
     [featured_user1_id, featured_user2_id, featured_user3_id, featured_user4_id].uniq.compact
   end
 
+  def remove_allowed_user(username)
+    user = User.where(username: username).first
+    if user
+      topic_allowed_users.where(user_id: user.id).first.destroy
+    end
+  end
+
   # Invite a user to the topic by username or email. Returns success/failure
   def invite(invited_by, username_or_email)
     if private_message?
       # If the user exists, add them to the topic.
-      user = User.find_by_username_or_email(username_or_email).first
-      if user.present?
-        if topic_allowed_users.create!(user_id: user.id)
-          # Notify the user they've been invited
-          user.notifications.create(notification_type: Notification.types[:invited_to_private_message],
-                                    topic_id: id,
-                                    post_number: 1,
-                                    data: { topic_title: title,
-                                            display_username: invited_by.username }.to_json)
-          return true
-        end
-      elsif username_or_email =~ /^.+@.+$/
-        # If the user doesn't exist, but it looks like an email, invite the user by email.
-        return invite_by_email(invited_by, username_or_email)
+      user = User.find_by_username_or_email(username_or_email)
+      if user && topic_allowed_users.create!(user_id: user.id)
+
+        # Notify the user they've been invited
+        user.notifications.create(notification_type: Notification.types[:invited_to_private_message],
+                                  topic_id: id,
+                                  post_number: 1,
+                                  data: { topic_title: title,
+                                          display_username: invited_by.username }.to_json)
+        return true
       end
-    else
-      # Success is whether the invite was created
-      return invite_by_email(invited_by, username_or_email).present?
     end
 
-    false
+    if username_or_email =~ /^.+@.+$/
+      # NOTE callers expect an invite object if an invite was sent via email
+      invite_by_email(invited_by, username_or_email)
+    else
+      false
+    end
   end
 
   # Invite a user by email and return the invite. Return the previously existing invite

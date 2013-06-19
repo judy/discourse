@@ -133,7 +133,22 @@ class User < ActiveRecord::Base
   def self.find_by_username_or_email(username_or_email)
     lower_user = username_or_email.downcase
     lower_email = Email.downcase(username_or_email)
-    where("username_lower = :user or lower(username) = :user or email = :email or lower(name) = :user", user: lower_user, email: lower_email)
+
+    users =
+      if username_or_email.include?('@')
+        User.where(email: lower_email)
+      else
+        User.where(username_lower: lower_user)
+      end
+        .to_a
+
+    if users.count > 1
+      raise Discourse::TooManyMatches
+    elsif users.count == 1
+      users[0]
+    else
+      nil
+    end
   end
 
   def enqueue_welcome_message(message_type)
@@ -637,6 +652,7 @@ end
 #  likes_given                   :integer          default(0), not null
 #  likes_received                :integer          default(0), not null
 #  topic_reply_count             :integer          default(0), not null
+#  blocked                       :boolean          default(FALSE)
 #
 # Indexes
 #

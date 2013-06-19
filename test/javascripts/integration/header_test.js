@@ -1,7 +1,6 @@
 /*global module:true test:true ok:true visit:true expect:true exists:true count:true */
 
 module("Header", {
-
   setup: function() {
     Ember.run(Discourse, Discourse.advanceReadiness);
   },
@@ -12,9 +11,10 @@ module("Header", {
 });
 
 test("/", function() {
-  expect(2);
 
   visit("/").then(function() {
+    expect(2);
+
     ok(exists("header"), "The header was rendered");
     ok(exists("#site-logo"), "The logo was shown");
   });

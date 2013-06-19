@@ -18,31 +18,15 @@ task "images:reindex" => :environment do
 			doc = Nokogiri::HTML::fragment(p.cooked)
 			doc.search("img").each do |img|
 				src = img['src']
-				if src.present? && has_been_uploaded?(src) && m = uploaded_regex.match(src)
+				if src.present? && Upload.has_been_uploaded?(src) && m = Upload.uploaded_regex.match(src)
           begin
-  					Post.exec_sql("INSERT INTO posts_uploads (post_id, upload_id) VALUES (?, ?)", p.id, m[:upload_id])
+            PostUpload.create({ post_id: p.id, upload_id: m[:upload_id] })
           rescue ActiveRecord::RecordNotUnique
           end
 				end
 			end
-			putc "."
+      putc "."
 		end
   end
   puts "\ndone."
-end
-
-def uploaded_regex
-  /\/uploads\/#{RailsMultisite::ConnectionManagement.current_db}\/(?<upload_id>\d+)\/[0-9a-f]{16}\.(png|jpg|jpeg|gif|tif|tiff|bmp)/
-end
-
-def has_been_uploaded?(url)
-  url =~ /^\/[^\/]/ || url.start_with?(base_url) || (asset_host.present? && url.start_with?(asset_host))
-end
-
-def base_url
-  asset_host.present? ? asset_host : Discourse.base_url_no_prefix
-end
-
-def asset_host
-  ActionController::Base.asset_host
 end

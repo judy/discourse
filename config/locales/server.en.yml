@@ -56,6 +56,8 @@ en:
   private_message_abbrev: "PM"
 
   groups:
+    errors:
+      can_not_modify_automatic: "You can not modify an automatic group"
     default_names:
       admins: "admins"
       moderators: "moderators"
@@ -381,7 +383,7 @@ en:
     memory_warning: 'Your server is running with less than 1 GB of total memory. At least 1 GB of memory is recommended.'
     facebook_config_warning: 'The server is configured to allow signup and log in with Facebook (enable_facebook_logins), but the app id and app secret values are not set. Go to <a href="/admin/site_settings">the Site Settings</a> and update the settings. <a href="https://github.com/discourse/discourse/wiki/The-Discourse-Admin-Quick-Start-Guide#enable-facebook-logins" target="_blank">See this guide to learn more</a>.'
     cas_config_warning: 'The server is configured to allow signup and log in with CAS (enable_cas_logins), but the hostname and domain name values are not set.'
-    twitter_config_warning: 'The server is configured to allow signup and log in with Twitter (enable_twitter_logins), but the key and secret values are not set. Go to <a href="/admin/site_settings">the Site Settings</a> and update the settings. <a href="https://github.com/discourse/discourse/wiki/The-Discourse-Admin-Quick-Start-Guide#enable-twitter-logins" target="_blank">See this guide to learn more</a>.'
+    twitter_config_warning: 'The server is configured to allow signup and log in with Twitter (enable_twitter_logins), but the key and secret values are not set. Go to <a href="/admin/site_site_settings">the Site Settings</a> and update the settings. <a href="https://github.com/discourse/discourse/wiki/The-Discourse-Admin-Quick-Start-Guide#enable-twitter-logins" target="_blank">See this guide to learn more</a>.'
     github_config_warning: 'The server is configured to allow signup and log in with GitHub (enable_github_logins), but the client id and secret values are not set. Go to <a href="/admin/site_settings">the Site Settings</a> and update the settings. <a href="https://github.com/discourse/discourse/wiki/The-Discourse-Admin-Quick-Start-Guide" target="_blank">See this guide to learn more</a>.'
     failing_emails_warning: 'There are %{num_failed_jobs} email jobs that failed. Check your config/environments/production.rb file and ensure that the config.action_mailer settings are correct. <a href="/sidekiq/retries" target="_blank">See the failed jobs in Sidekiq</a>.'
     default_logo_warning: "You haven't customized the logo images for your site. Update logo_url, logo_small_url, and favicon_url in the <a href='/admin/site_settings'>Site Settings</a>."
@@ -446,7 +448,7 @@ en:
     ninja_edit_window: "Number of seconds after posting where edits do not create a new version"
     max_image_width: "Maximum allowed width of images in a post"
     category_featured_topics: "Number of topics displayed per category in the /categories page"
-    add_rel_nofollow_to_user_content: "Add rel nofollow to all submitted user content, except for internal links (including parent domains) changing this requires you update all your baked markdown (<code>rake posts:rebake</code>)"
+    add_rel_nofollow_to_user_content: "Add rel nofollow to all submitted user content, except for internal links (including parent domains) changing this requires you update all your baked markdown with: \"rake posts:rebake\""
     exclude_rel_nofollow_domains: "A comma delimited list of domains where nofollow is not added (tld.com will automatically allow sub.tld.com as well)"
 
     post_excerpt_maxlength: "Maximum length in chars of a post's excerpt"
@@ -457,7 +459,6 @@ en:
     logo_url: "The logo for your site eg: http://example.com/logo.png"
     logo_small_url: "The small logo for your site used when scrolling down on topics eg: http://example.com/logo-small.png"
     favicon_url: "A favicon for your site, see http://en.wikipedia.org/wiki/Favicon"
-    dynamic_favicon: "Show incoming message notifications on favicon"
     apple_touch_icon_url: "Icon used for Apple touch devices. Recommended size is 144px by 144px."
 
     notification_email: "The return email address used when sending system emails such as notifying users of lost passwords, new accounts etc"
@@ -583,6 +584,7 @@ en:
     newuser_max_mentions_per_post: "Maximum number of @name notifications a new user can use in a post"
     max_mentions_per_post: "Maximum number of @name notifications you can use in a post"
 
+    create_thumbnails: "Create thumbnails for lightboxed images"
     auto_link_images_wider_than: "Images wider than this, in pixels, will get auto link and lightbox treatment"
 
     email_time_window_mins: "How many minutes we wait before sending a user mail, to give them a chance to see it first"
@@ -614,6 +616,15 @@ en:
 
     reply_by_email_enabled: "Whether this forum supports reply by email"
     reply_by_email_address: "Template for reply by email address in form, for example: %{reply_key}@reply.myforum.com"
+
+    pop3s_polling_enabled: "Whether to poll via POP3S for reply by email"
+    pop3s_polling_port: "The port to poll a POP3S account on"
+    pop3s_polling_host: "The host to poll for email via POP3S"
+    pop3s_polling_username: "The username for the POP3S account to poll for email"
+    pop3s_polling_password: "The password for the POP3S account to poll for email"
+
+    minimum_topics_similar: "How many topics need to exist in the database before similar topics are presented."
+
 
   notification_types:
     mentioned: "%{display_username} mentioned you in %{link}"
