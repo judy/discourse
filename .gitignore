@@ -20,7 +20,8 @@ dump.rdb
 /cache
 /coverage/*
 
-/public/assets/*
+# We're pre-caching these assets before deploy.
+# /public/assets/*
 
 config/database.yml
 # config/redis.yml
