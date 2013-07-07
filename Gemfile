@@ -106,7 +106,6 @@ group :test, :development do
   gem 'guard-spork', require: false
   gem 'mocha', require: false
   gem 'rb-fsevent', require: RUBY_PLATFORM =~ /darwin/i ? 'rb-fsevent' : false
-  gem 'rb-inotify', '~> 0.9', require: RUBY_PLATFORM =~ /linux/i ? 'rb-inotify' : false
   gem 'rspec-rails', require: false
   gem 'shoulda', require: false
   gem 'simplecov', require: false
