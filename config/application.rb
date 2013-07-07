@@ -7,9 +7,9 @@ require_relative '../lib/discourse_plugin_registry'
 
 if defined?(Bundler)
   # If you precompile assets before deploying to production, use this line
-  Bundler.require(*Rails.groups(assets: %w(development test profile)))
+  # Bundler.require(*Rails.groups(assets: %w(development test profile)))
   # If you want your assets lazily compiled in production, use this line
-  # Bundler.require(:default, :assets, Rails.env)
+  Bundler.require(:default, :assets, Rails.env)
 end
 
 module Discourse
