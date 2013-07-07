@@ -34,7 +34,15 @@ Discourse::Application.configure do
 
   # we recommend you use mailcatcher https://github.com/sj26/mailcatcher
   config.action_mailer.delivery_method = :smtp
-  config.action_mailer.smtp_settings = { address: "localhost", port: 1025 }
+  config.action_mailer.smtp_settings = {
+      :address   => "smtp.mandrillapp.com",
+      :port      => 587,
+      :enable_starttls_auto => true,
+      :user_name =>      ENV['MANDRILL_USERNAME'],
+      :password =>       ENV['MANDRILL_APIKEY'],
+      :domain =>         'makespace.herokuapp.com',
+      :authentication => :login
+  }
   config.action_mailer.raise_delivery_errors = true
 
   BetterErrors::Middleware.allow_ip! ENV['TRUSTED_IP'] if ENV['TRUSTED_IP']
