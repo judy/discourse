@@ -79,6 +79,9 @@ chef/tmp/*
 # .env, local environment variables for use with foreman
 .env
 
+# exclude local pow file. changes depending on local environment.
+.powenv
+
 # exclude our git version file for now
 config/version.rb
 
