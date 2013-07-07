@@ -106,7 +106,7 @@ Discourse.TopicView = Discourse.View.extend(Discourse.Scrolling, {
     this.resetExamineDockCache();
 
     // this happens after route exit, stuff could have trickled in
-    this.set('controller.controllers.header.showExtraInfo', false)
+    this.set('controller.controllers.header.showExtraInfo', false);
   },
 
   didInsertElement: function(e) {
@@ -388,7 +388,10 @@ Discourse.TopicView = Discourse.View.extend(Discourse.Scrolling, {
 
   nonUrgentPositionUpdate: Discourse.debounce(function(opts) {
     Discourse.ScreenTrack.instance().scrolled();
-    this.set('controller.currentPost', opts.currentPost);
+    var model = this.get('controller.model');
+    if (model) {
+      this.set('controller.currentPost', opts.currentPost);
+    }
   },500),
 
   scrolled: function(){

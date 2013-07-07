@@ -37,7 +37,7 @@ class SiteSetting < ActiveRecord::Base
   client_setting(:allow_uncategorized_topics, true)
   client_setting(:min_search_term_length, 3)
   client_setting(:flush_timings_secs, 5)
-  client_setting(:supress_reply_directly_below, true)
+  client_setting(:suppress_reply_directly_below, true)
   client_setting(:email_domains_blacklist, 'mailinator.com')
   client_setting(:email_domains_whitelist)
   client_setting(:version_checks, true)
@@ -67,7 +67,6 @@ class SiteSetting < ActiveRecord::Base
   setting(:port, Rails.env.development? ? 3000 : '')
   setting(:enable_private_messages, true)
   setting(:use_ssl, false)
-  setting(:access_password)
   setting(:queue_jobs, !Rails.env.test?)
   setting(:crawl_images, !Rails.env.test?)
   setting(:max_image_width, 690)
@@ -180,7 +179,7 @@ class SiteSetting < ActiveRecord::Base
   setting(:basic_requires_read_posts, 50)
   setting(:basic_requires_time_spent_mins, 15)
 
-  setting(:regular_requires_topics_entered, 3)
+  setting(:regular_requires_topics_entered, 20)
   setting(:regular_requires_read_posts, 100)
   setting(:regular_requires_time_spent_mins, 60)
   setting(:regular_requires_days_visited, 15)
@@ -253,14 +252,17 @@ class SiteSetting < ActiveRecord::Base
     min_private_message_post_length..max_post_length
   end
 
+  def self.top_menu_items
+    top_menu.split('|').map { |menu_item| TopMenuItem.new(menu_item) }
+  end
+
   def self.homepage
-    # TODO objectify this
-    top_menu.split('|')[0].split(',')[0]
+    top_menu_items[0].name
   end
 
   def self.anonymous_homepage
-    # TODO objectify this
-    top_menu.split('|').map{|f| f.split(',')[0] }.select{ |f| ['latest', 'hot', 'categories', 'category'].include? f}[0]
+    list = ['latest', 'hot', 'categories', 'category']
+    top_menu_items.map { |item| item.name }.select{ |item| list.include?(item) }.first
   end
 
 end

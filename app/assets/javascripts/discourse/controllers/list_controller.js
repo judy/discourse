@@ -13,7 +13,6 @@ Discourse.ListController = Discourse.Controller.extend({
   needs: ['composer', 'modal', 'listTopics'],
 
   availableNavItems: function() {
-    var summary = this.get('filterSummary');
     var loggedOn = !!Discourse.User.current();
 
     return Discourse.SiteSettings.top_menu.split("|").map(function(i) {
@@ -64,7 +63,6 @@ Discourse.ListController = Discourse.Controller.extend({
     return Discourse.TopicList.list(current).then(function(items) {
       listController.setProperties({
         loading: false,
-        filterSummary: items.filter_summary,
         filterMode: filterMode,
         draft: items.draft,
         draft_key: items.draft_key,
@@ -105,7 +103,7 @@ Discourse.ListController = Discourse.Controller.extend({
   canEditCategory: function() {
     if( this.present('category') ) {
       var u = Discourse.User.current();
-      return u && u.admin;
+      return u && u.staff;
     } else {
       return false;
     }

@@ -1,5 +1,3 @@
-/*global module:true test:true ok:true visit:true equal:true exists:true count:true equal:true present:true sinon:true blank:true */
-
 module("Discourse.ClickTrack", {
   setup: function() {
 
@@ -39,9 +37,10 @@ module("Discourse.ClickTrack", {
 
 var track = Discourse.ClickTrack.trackClick;
 
+// test
 var generateClickEventOn = function(selector) {
   return $.Event("click", { currentTarget: $(selector)[0] });
-}
+};
 
 test("does not track clicks on lightboxes", function() {
   var clickEvent = generateClickEventOn('.lightbox');
@@ -59,11 +58,11 @@ test("it calls preventDefault when clicking on an a", function() {
 });
 
 test("does not track clicks on back buttons", function() {
-  ok(track(generateClickEventOn('.back')))
+  ok(track(generateClickEventOn('.back')));
 });
 
 test("does not track clicks on quote buttons", function() {
-  ok(track(generateClickEventOn('.quote-other-topic')))
+  ok(track(generateClickEventOn('.quote-other-topic')));
 });
 
 test("removes the href and put it as a data attribute", function() {
@@ -101,7 +100,7 @@ test("updates badge counts correctly", function() {
 });
 
 var trackRightClick = function() {
-  var clickEvent = generateClickEventOn('a')
+  var clickEvent = generateClickEventOn('a');
   clickEvent.which = 3;
   return track(clickEvent);
 };

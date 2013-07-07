@@ -385,12 +385,17 @@ en:
     cas_config_warning: 'The server is configured to allow signup and log in with CAS (enable_cas_logins), but the hostname and domain name values are not set.'
     twitter_config_warning: 'The server is configured to allow signup and log in with Twitter (enable_twitter_logins), but the key and secret values are not set. Go to <a href="/admin/site_site_settings">the Site Settings</a> and update the settings. <a href="https://github.com/discourse/discourse/wiki/The-Discourse-Admin-Quick-Start-Guide#enable-twitter-logins" target="_blank">See this guide to learn more</a>.'
     github_config_warning: 'The server is configured to allow signup and log in with GitHub (enable_github_logins), but the client id and secret values are not set. Go to <a href="/admin/site_settings">the Site Settings</a> and update the settings. <a href="https://github.com/discourse/discourse/wiki/The-Discourse-Admin-Quick-Start-Guide" target="_blank">See this guide to learn more</a>.'
+    s3_config_warning: 'The server is configured to upload files to s3, but at least one the following setting is not set: s3_access_key_id, s3_secret_access_key or s3_upload_bucket. Go to <a href="/admin/site_settings">the Site Settings</a> and update the settings. <a href="http://meta.discourse.org/t/how-to-set-up-image-uploads-to-s3/7229" target="_blank">See "How to set up image uploads to S3?" to learn more</a>.'
+    image_magick_warning: 'The server is configured to create thumbnails of large images, but ImageMagick is not installed. Install ImageMagick using your favorite package manager or go to <a href="http://www.imagemagick.org/script/binary-releases.php" target="_blank">to download the latest release</a>.'
     failing_emails_warning: 'There are %{num_failed_jobs} email jobs that failed. Check your config/environments/production.rb file and ensure that the config.action_mailer settings are correct. <a href="/sidekiq/retries" target="_blank">See the failed jobs in Sidekiq</a>.'
     default_logo_warning: "You haven't customized the logo images for your site. Update logo_url, logo_small_url, and favicon_url in the <a href='/admin/site_settings'>Site Settings</a>."
     contact_email_missing: "You haven't provided a contact email for your site. Please update contact_email in the <a href='/admin/site_settings'>Site Settings</a>."
     contact_email_invalid: "The site contact email is invalid. Please update contact_email in the <a href='/admin/site_settings'>Site Settings</a>."
     title_nag: "The title Site Setting is still set to the default value. Please update it with your site's title in the <a href='/admin/site_settings'>Site Settings</a>."
     consumer_email_warning: "Your site is configured to use Gmail (or another consumer email service) to send email. <a href='http://support.google.com/a/bin/answer.py?hl=en&answer=166852' target='_blank'>Gmail limits how many emails you can send</a>. Consider using an email service provider like mandrill.com to ensure email deliverability."
+    access_password_removal: "Your site was using the access_password setting, which has been removed. The login_required and must_approve_users settings have been enabled, which should be used instead. You can change them in the <a href='/admin/site_settings'>Site Settings</a>. Be sure to <a href='/admin/users/list/pending'>approve users in the Pending Users list</a>. (This message will go away after 2 days.)"
+    system_username_warning: "The system_username setting is blank. Please update it in the <a href='/admin/site_settings'>Site Settings</a>. Set it to the username of an admin user who should be the sender of system messages."
+    notification_email_warning: "The notification_email setting is blank. Please update it in the <a href='/admin/site_settings'>Site Settings</a>."
 
   content_types:
     education_new_reply:
@@ -408,12 +413,13 @@ en:
     welcome_invite:
       title: "Welcome: Invited User"
       description: "A private message automatically sent to all new invited users when they accept the invitation from another user to participate."
-
+    privacy_policy:
+      title: "Privacy Policy"
+      description: "Your site's privacy policy. Leave blank for default policy."
     login_required_welcome_message:
       title: "Login Required: Welcome Message"
       description: "Welcome message that is displayed to logged out users when
         the 'login required' setting is enabled."
-
     tos_user_content_license:
       title: "Terms of Service: Content License"
       description: "The text for the Content License section of the Terms of Service."
@@ -442,7 +448,6 @@ en:
     company_short_name: "The short name of the company that runs this site, used in legal documents like the /tos"
     company_domain: "The domain name owned by the company that runs this site, used in legal documents like the /tos"
     api_key: "The secure API key used to create and update topics, use the /admin/api section to set it up"
-    access_password: "When restricted access is enabled, this password must be entered"
     queue_jobs: "Queue various jobs in sidekiq, if false queues are inline"
     crawl_images: "Enable retrieving images from third party sources to insert width and height dimensions"
     ninja_edit_window: "Number of seconds after posting where edits do not create a new version"
@@ -496,7 +501,7 @@ en:
     posts_per_page: "How many posts are returned on a topic page"
     system_username: "Username for the author of automated private messages sent by the forum"
     send_welcome_message: "Do new users get a welcome private message?"
-    supress_reply_directly_below: "Don't show reply count on a post when there is a single reply directly below"
+    suppress_reply_directly_below: "Don't show reply count on a post when there is a single reply directly below"
     allow_index_in_robots_txt: "Site should be indexed by search engines (update robots.txt)"
     email_domains_blacklist: "A pipe-delimited list of email domains that are not allowed. Example: mailinator.com|trashmail.net"
     email_domains_whitelist: "A pipe-delimited list of email domains that users may register with. WARNING: Users with email domains other than those listed will not be allowed."
@@ -749,15 +754,7 @@ en:
 
       <small>There should be an unsubscribe footer on every email you send, so let's mock one up. This email was sent by Name of Company, 55 Main Street, Anytown, USA 12345. If you would like to opt out of future emails, [click here to unsubscribe][5].</small>
 
-  request_access:
-    code: "Access Code"
-    instructions: "This site has restricted access, enter the access code below:"
-    enter: "Enter"
-    incorrect: "access code was incorrect"
-
   system_messages:
-    site_password: "Also, the site password is `%{access_password}` if you need it."
-
     post_hidden:
       subject_template: "Post hidden due to community flagging"
       text_body_template: |
@@ -898,6 +895,9 @@ en:
       title: "Unsubscribe"
       description: "Not interested in getting these emails? No problem! Click below to unsubscribe instantly:"
 
+    reply_by_email: "To respond, reply to this email or visit %{base_url}%{url} in your browser."
+    visit_link_to_respond: "To respond, visit %{base_url}%{url} in your browser."
+
     user_invited_to_private_message:
       subject_template: "[%{site_name}] %{username} invited you to a private message '%{topic_title}'"
       text_body_template: |
@@ -914,7 +914,7 @@ en:
         %{message}
 
         ---
-        Please visit this link to respond: %{base_url}%{url}
+        %{respond_instructions}
 
     user_quoted:
       subject_template: "[%{site_name}] %{username} quoted you in '%{topic_title}'"
@@ -925,7 +925,7 @@ en:
         %{message}
 
         ---
-        Please visit this link to respond: %{base_url}%{url}
+        %{respond_instructions}
 
     user_mentioned:
       subject_template: "[%{site_name}] %{username} mentioned you in '%{topic_title}'"
@@ -936,7 +936,7 @@ en:
         %{message}
 
         ---
-        Please visit this link to respond: %{base_url}%{url}
+        %{respond_instructions}
 
     user_posted:
       subject_template: "[%{site_name}] %{username} posted in '%{topic_title}'"
@@ -947,7 +947,7 @@ en:
         %{message}
 
         ---
-        Please visit this link to respond: %{base_url}%{url}
+        %{respond_instructions}
 
     digest:
       why: "Here's a brief summary of the discussion on %{site_link} since we last saw you on %{last_seen_at}."
@@ -968,7 +968,7 @@ en:
         %{message}
 
         ---
-        Please visit this link to respond: %{base_url}%{url}
+        %{respond_instructions}
 
     forgot_password:
       subject_template: "[%{site_name}] Password reset"
@@ -1029,7 +1029,7 @@ en:
   login_required:
     welcome_message: |
       #[Welcome to %{title}](#welcome)
-      We are excited to have you participate in %{title}. Please create an account or login to continue.
+      This discussion forum requires an account to view %{title}. Please create an account or login to continue.
 
   terms_of_service:
     user_content_license: |

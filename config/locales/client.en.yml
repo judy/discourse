@@ -45,8 +45,8 @@ en:
           other: "%{count}y"
       medium:
         x_minutes:
-          one: "1 minute"
-          other: "%{count} minutes"
+          one: "1 min"
+          other: "%{count} mins"
         x_hours:
           one: "1 hour"
           other: "%{count} hours"
@@ -55,8 +55,8 @@ en:
           other: "%{count} days"
       medium_with_ago:
         x_minutes:
-          one: "1 minute ago"
-          other: "%{count} minutes ago"
+          one: "1 min ago"
+          other: "%{count} mins ago"
         x_hours:
           one: "1 hour ago"
           other: "%{count} hours ago"
@@ -78,6 +78,7 @@ en:
     yes_value: "Yes"
     of_value: "of"
     generic_error: "Sorry, an error has occurred."
+    generic_error_with_reason: "An error occured: %{error}"
     log_in: "Log In"
     age: "Age"
     last_post: "Last Post"
@@ -86,6 +87,7 @@ en:
     show_more: "show more"
     links: Links
     faq: "FAQ"
+    privacy_policy: "Privacy Policy"
     you: "You"
     or: "or"
     now: "just now"
@@ -294,6 +296,8 @@ en:
       avatar:
         title: "Avatar"
         instructions: "We use <a href='https://gravatar.com' target='_blank'>Gravatar</a> for avatars based on your email"
+      title:
+        title: "Title"
 
       filters:
         all: "All"
@@ -361,7 +365,7 @@ en:
       or: "Or"
       authenticating: "Authenticating..."
       awaiting_confirmation: "Your account is awaiting activation, use the forgot password link to issue another activation email."
-      awaiting_approval: "Your account has not been approved by a moderator yet. You will receive an email when it is approved."
+      awaiting_approval: "Your account has not been approved by a staff member yet. You will be sent an email when it is approved."
       not_activated: "You can't log in yet. We previously sent an activation email to you at <b>{{sentTo}}</b>. Please follow the instructions in that email to activate your account."
       resend_activation_email: "Click here to send the activation email again."
       sent_activation_email_again: "We sent another activation email to you at <b>{{currentEmail}}</b>. It might take a few minutes for it to arrive; be sure to check your spam folder."
@@ -388,7 +392,7 @@ en:
         message: "Authenticating with Mozilla Persona (make sure pop up blockers are not enabled)"
 
     composer:
-      posting_not_on_topic: "You are replying to the topic \"{{title}}\", but you are currently viewing a different topic."
+      posting_not_on_topic: "Which topic do you want to reply to?"
       saving_draft_tip: "saving"
       saved_draft_tip: "saved"
       saved_local_draft_tip: "saved locally"
@@ -397,7 +401,7 @@ en:
 
       min_length:
         need_more_for_title: "{{n}} to go for the title"
-        need_more_for_reply: "{{n}} to go for the reply"
+        need_more_for_reply: "{{n}} to go for the post"
 
       error:
         title_missing: "Title is required."
@@ -1033,10 +1037,18 @@ en:
         title: "Flags"
         old: "Old"
         active: "Active"
-        clear: "Clear Flags"
-        clear_title: "dismiss all flags on this post (will unhide hidden posts)"
-        delete: "Delete Post"
-        delete_title: "delete post (if its the first post delete topic)"
+
+        agree_hide: "Agree (hide post + send PM)"
+        agree_hide_title: "Hide this post and automatically send the user a private message urging them to edit it"
+        defer: "Defer"
+        defer_title: "No action is necessary at this time, defer any action on this flag until a later date, or never"
+        delete_post: "Delete Post"
+        delete_post_title: "Delete post; if the first post, delete the topic"
+        disagree_unhide: "Disagree (unhide post)"
+        disagree_unhide_title: "Remove any flags from this post and make the post visible again"
+        disagree: "Disagree"
+        disagree_title: "Disagree with flag, remove any flags from this post"
+
         flagged_by: "Flagged by"
         error: "Something went wrong"
         view_message: "view message"
@@ -1158,6 +1170,8 @@ en:
         admin: "Admin?"
         blocked: "Blocked?"
         show_admin_profile: "Admin"
+        edit_title: "Edit Title"
+        save_title: "Save Title"
         refresh_browsers: "Force browser refresh"
         show_public_profile: "Show Public Profile"
         impersonate: 'Impersonate'
@@ -1198,7 +1212,7 @@ en:
         deactivate_failed: "There was a problem deactivating the user."
         unblock_failed: 'There was a problem unblocking the user.'
         block_failed: 'There was a problem blocking the user.'
-        deactivate_explanation: "A deactivated user must validate their email again before logging in."
+        deactivate_explanation: "A deactivated user must re-validate their email."
         banned_explanation: "A banned user can't log in."
         block_explanation: "A blocked user can't post or start topics."
 

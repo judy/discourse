@@ -111,6 +111,43 @@ describe CookedPostProcessor do
       end
     end
 
+    context 'with a oneboxed image' do
+      let(:user) { Fabricate(:user) }
+      let(:topic) { Fabricate(:topic, user: user) }
+      let(:post) { Fabricate.build(:post_with_oneboxed_image, topic: topic, user: user) }
+      let(:processor) { CookedPostProcessor.new(post) }
+
+      before do
+        processor.post_process_images
+      end
+
+      it "doesn't lightbox" do
+        processor.html.should_not =~ /class="lightbox"/
+      end
+    end
+
+    context "with a large image" do
+
+      let(:user) { Fabricate(:user) }
+      let(:topic) { Fabricate(:topic, user: user) }
+      let(:post) { Fabricate.build(:post_with_uploads, topic: topic, user: user) }
+      let(:processor) { CookedPostProcessor.new(post) }
+
+      before do
+        FastImage.stubs(:size).returns([1000, 1000])
+        processor.post_process_images
+      end
+
+      it "generates overlay information" do
+        processor.html.should =~ /class="lightbox"/
+        processor.html.should =~ /class="meta"/
+        processor.html.should =~ /class="filename"/
+        processor.html.should =~ /class="informations"/
+        processor.html.should =~ /class="expand"/
+      end
+
+    end
+
   end
 
   context 'link convertor' do
@@ -164,15 +201,19 @@ describe CookedPostProcessor do
     end
   end
 
-  context 'get_image_uri' do
+  context 'is_valid_image_uri?' do
 
-    it "returns nil unless the scheme is either http or https" do
-      cpp.get_image_uri("http://domain.com").should   == URI.parse("http://domain.com")
-      cpp.get_image_uri("https://domain.com").should  == URI.parse("https://domain.com")
-      cpp.get_image_uri("ftp://domain.com").should    == nil
-      cpp.get_image_uri("ftps://domain.com").should   == nil
-      cpp.get_image_uri("//domain.com").should        == nil
-      cpp.get_image_uri("/tmp/image.png").should      == nil
+    it "needs the scheme to be either http or https" do
+      cpp.is_valid_image_uri?("http://domain.com").should   == true
+      cpp.is_valid_image_uri?("https://domain.com").should  == true
+      cpp.is_valid_image_uri?("ftp://domain.com").should    == false
+      cpp.is_valid_image_uri?("ftps://domain.com").should   == false
+      cpp.is_valid_image_uri?("//domain.com").should        == false
+      cpp.is_valid_image_uri?("/tmp/image.png").should      == false
+    end
+
+    it "doesn't throw exception with a bad URI" do
+      cpp.is_valid_image_uri?("http://do<main.com").should  == nil
     end
 
   end

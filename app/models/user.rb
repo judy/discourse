@@ -7,6 +7,7 @@ require_dependency 'discourse'
 require_dependency 'post_destroyer'
 require_dependency 'user_name_suggester'
 require_dependency 'roleable'
+require_dependency 'pretty_text'
 
 class User < ActiveRecord::Base
   include Roleable
@@ -28,6 +29,7 @@ class User < ActiveRecord::Base
   has_many :invites
   has_many :topic_links
 
+  has_one :facebook_user_info, dependent: :destroy
   has_one :twitter_user_info, dependent: :destroy
   has_one :github_user_info, dependent: :destroy
   has_one :cas_user_info, dependent: :destroy
@@ -192,12 +194,12 @@ class User < ActiveRecord::Base
   end
 
   # Approve this user
-  def approve(approved_by)
+  def approve(approved_by, send_mail=true)
     self.approved = true
     self.approved_by = approved_by
     self.approved_at = Time.now
 
-    send_approval_email if save
+    send_approval_email if save and send_mail
   end
 
   def self.email_hash(email)
@@ -653,6 +655,7 @@ end
 #  likes_received                :integer          default(0), not null
 #  topic_reply_count             :integer          default(0), not null
 #  blocked                       :boolean          default(FALSE)
+#  dynamic_favicon               :boolean          default(FALSE), not null
 #
 # Indexes
 #

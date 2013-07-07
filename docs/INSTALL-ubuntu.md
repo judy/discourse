@@ -249,7 +249,7 @@ Not english? Set the default language as appropriate:
     SiteSetting.default_locale = 'fr'
 
     # Not sure if your locale is supported? Check at the rails console:
-    LocaleSiteSetting.all_values
+    LocaleSiteSetting.values
      => ["cs", "da", "de", "en", "es", "fr", "id", "it", "nb_NO", "nl", "pseudo", "pt", "ru", "sv", "zh_CN", "zh_TW"] 
 
 ## nginx setup
@@ -325,6 +325,20 @@ and create an account by logging in normally, then run the commands:
     > me.admin = true
     > me.save
 
+## Site localization
+
+Custom assets such as images should be placed somewhere under:
+
+    DISCOURSE_HOME/public/
+
+For example, create a `local` directory and place it into:
+
+    DISCOURSE_HOME/public/uploads/local/michael.png
+
+The corresponding site setting is:
+
+    logo_small_url: /uploads/local/michael.png
+
 ## Updating Discourse
 
     # Run these commands as the discourse user
@@ -340,3 +354,5 @@ and create an account by logging in normally, then run the commands:
     RUBY_GC_MALLOC_LIMIT=90000000 RAILS_ENV=production rake db:migrate
     RUBY_GC_MALLOC_LIMIT=90000000 RAILS_ENV=production rake assets:precompile
     bluepill start
+
+Note that if bluepill *itself* needs to be restarted, it must be killed with `bluepill quit` and restarted with the same command that's in crontab

@@ -204,6 +204,17 @@ Handlebars.registerHelper('unboundAge', function(property, options) {
 });
 
 /**
+  Live refreshing age helper, with a tooltip showing the date and time
+
+  @method unboundAgeWithTooltip
+  @for Handlebars
+**/
+Handlebars.registerHelper('unboundAgeWithTooltip', function(property, options) {
+  var dt = new Date(Ember.Handlebars.get(this, property, options));
+  return new Handlebars.SafeString(Discourse.Formatter.autoUpdatingRelativeAge(dt, {title: true}));
+});
+
+/**
   Display a date related to an edit of a post
 
   @method editDate
@@ -212,7 +223,7 @@ Handlebars.registerHelper('unboundAge', function(property, options) {
 Handlebars.registerHelper('editDate', function(property, options) {
   // autoupdating this is going to be painful
   var date = new Date(Ember.Handlebars.get(this, property, options));
-  return new Handlebars.SafeString(Discourse.Formatter.autoUpdatingRelativeAge(date, {format: 'medium', leaveAgo: true, wrapInSpan: false}));
+  return new Handlebars.SafeString(Discourse.Formatter.autoUpdatingRelativeAge(date, {format: 'medium', title: true, leaveAgo: true, wrapInSpan: false}));
 });
 
 /**
@@ -223,7 +234,7 @@ Handlebars.registerHelper('editDate', function(property, options) {
 **/
 Ember.Handlebars.registerHelper('percentile', function(property, options) {
   var percentile = Ember.Handlebars.get(this, property, options);
-  return Math.round((1.0 - percentile) * 100)
+  return Math.round((1.0 - percentile) * 100);
 });
 
 /**
@@ -236,7 +247,7 @@ Ember.Handlebars.registerHelper('float', function(property, options) {
   var x = Ember.Handlebars.get(this, property, options);
   if (!x) return "0";
   if (Math.round(x) === x) return x;
-  return x.toFixed(3)
+  return x.toFixed(3);
 });
 
 /**
@@ -284,7 +295,7 @@ Handlebars.registerHelper('date', function(property, options) {
   var val = Ember.Handlebars.get(this, property, options);
   if (val) {
     var date = new Date(val);
-    return new Handlebars.SafeString(Discourse.Formatter.autoUpdatingRelativeAge(date, {format: 'medium', leaveAgo: leaveAgo}));
+    return new Handlebars.SafeString(Discourse.Formatter.autoUpdatingRelativeAge(date, {format: 'medium', title: true, leaveAgo: leaveAgo}));
   }
 
 });

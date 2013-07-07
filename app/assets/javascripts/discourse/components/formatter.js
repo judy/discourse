@@ -1,3 +1,5 @@
+/*jshint onecase:true */
+
 Discourse.Formatter = (function(){
 
   var updateRelativeAge, autoUpdatingRelativeAge, relativeAge, relativeAgeTiny,
@@ -15,7 +17,7 @@ Discourse.Formatter = (function(){
     return str.replace(/\w\S*/g, function(txt){
       return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
     });
-  }
+  };
 
   longDate = function(dt) {
     if (!dt) return;
@@ -41,11 +43,15 @@ Discourse.Formatter = (function(){
     var append = "";
 
     if(format === 'medium') {
-      append = " date' title='" + longDate(date);
+      append = " date";
       if(options.leaveAgo) {
         format = 'medium-with-ago';
       }
       options.wrapInSpan = false;
+    }
+
+    if (options.title) {
+      append += "' title='" + longDate(date);
     }
 
     return "<span class='relative-date" + append + "' data-time='" + date.getTime() + "' data-format='" + format +  "'>" + relativeAge(date, options)  + "</span>";
@@ -105,7 +111,7 @@ Discourse.Formatter = (function(){
 
     var t = function(key, opts){
       return Ember.String.i18n("dates.medium" + (leaveAgo?"_with_ago":"") + "." + key, opts);
-    }
+    };
 
     switch(true){
     case(distanceInMinutes >= 1 && distanceInMinutes <= 56):

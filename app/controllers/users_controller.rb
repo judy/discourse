@@ -5,7 +5,6 @@ class UsersController < ApplicationController
 
   skip_before_filter :check_xhr, only: [:show, :password_reset, :update, :activate_account, :avatar, :authorize_email, :user_preferences_redirect]
   skip_before_filter :authorize_mini_profiler, only: [:avatar]
-  skip_before_filter :check_restricted_access, only: [:avatar]
 
   before_filter :ensure_logged_in, only: [:username, :update, :change_email, :user_preferences_redirect]
 
@@ -49,6 +48,7 @@ class UsersController < ApplicationController
       u.digest_after_days = params[:digest_after_days] || u.digest_after_days
       u.auto_track_topics_after_msecs = params[:auto_track_topics_after_msecs].to_i if params[:auto_track_topics_after_msecs]
       u.new_topic_duration_minutes = params[:new_topic_duration_minutes].to_i if params[:new_topic_duration_minutes]
+      u.title = params[:title] || u.title if guardian.can_grant_title?(u)
 
       [:email_digests, :email_direct, :email_private_messages,
        :external_links_in_new_tab, :enable_quoting, :dynamic_favicon].each do |i|
@@ -146,7 +146,7 @@ class UsersController < ApplicationController
   end
 
   def create
-    return fake_success_reponse if suspicious? params
+    return fake_success_response if suspicious? params
 
     user = User.new_from_params(params)
 
@@ -306,7 +306,7 @@ class UsersController < ApplicationController
     @user = fetch_user_from_params
     @email_token = @user.email_tokens.unconfirmed.active.first
     if @user
-      @email_token = @user.email_tokens.create(email: @user.email) if @email_token.nil?
+      @email_token ||= @user.email_tokens.create(email: @user.email)
       Jobs.enqueue(:user_email, type: :signup, user_id: @user.id, email_token: @email_token.token)
     end
     render nothing: true
@@ -337,7 +337,7 @@ class UsersController < ApplicationController
       honeypot_or_challenge_fails?(params) || SiteSetting.invite_only?
     end
 
-    def fake_success_reponse
+    def fake_success_response
       render(
         json: {
           success: true,

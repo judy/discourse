@@ -1,6 +1,10 @@
-/*global module:true test:true ok:true visit:true equal:true exists:true count:true equal:true present:true md5:true sanitizeHtml:true */
+/*global sanitizeHtml:true */
 
-module("Discourse.Markdown");
+module("Discourse.Markdown", {
+  setup: function() {
+    Discourse.SiteSettings.traditional_markdown_linebreaks = false;
+  }
+});
 
 var cooked = function(input, expected, text) {
   equal(Discourse.Markdown.cook(input, {mentionLookup: false }), expected, text);
@@ -8,11 +12,27 @@ var cooked = function(input, expected, text) {
 
 var cookedOptions = function(input, opts, expected, text) {
   equal(Discourse.Markdown.cook(input, opts), expected, text);
-}
+};
 
 test("basic cooking", function() {
   cooked("hello", "<p>hello</p>", "surrounds text with paragraphs");
-  cooked("1\n2\n3", "<p>1 <br>\n2 <br>\n3</p>", "automatically handles trivial newlines");
+});
+
+test("Line Breaks", function() {
+
+  var input = "1\n2\n3";
+  cooked(input, "<p>1 <br>\n2 <br>\n3</p>", "automatically handles trivial newlines");
+
+  var traditionalOutput = "<p>1\n2\n3</p>";
+
+  cookedOptions(input,
+                {traditional_markdown_linebreaks: true},
+                traditionalOutput,
+                "It supports traditional markdown via an option");
+
+  Discourse.SiteSettings.traditional_markdown_linebreaks = true;
+  cooked(input, traditionalOutput, "It supports traditional markdown via a Site Setting");
+
 });
 
 test("Links", function() {
@@ -57,7 +77,7 @@ test("Quotes", function() {
                 "<p>1</p><aside class='quote' data-post=\"1\" >\n  <div class='title'>\n    <div class='quote-controls'></div>\n" +
                 "  \n  bob\n  said:\n  </div>\n  <blockquote>my quote</blockquote>\n</aside>\n<p> <br>\n2</p>",
                 "includes no avatar if none is found");
-});
+}); 
 
 test("Mentions", function() {
   cookedOptions("Hello @sam", { mentionLookup: (function() { return true; }) },
@@ -99,3 +119,10 @@ test("SanitizeHTML", function() {
   equal(sanitizeHtml("<div><p class=\"funky\" wrong='1'>hello</p></div>"), "<div><p class=\"funky\">hello</p></div>");
 
 });
+
+// TODO
+// test("with BBCode", function() {
+//   cooked("[img]http://eviltrout.com/eviltrout.png[/img]",
+//          "<p><img src=\"http://eviltrout.com/eviltrout.png\"></p>",
+//          "BBCode is parsed first");
+// });
