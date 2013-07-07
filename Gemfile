@@ -30,6 +30,9 @@ gem 'fastimage'
 gem 'fog', require: false
 gem 'hiredis'
 
+# Scale back heroku jobs when not being used.
+gem 'autoscaler', require: false
+
 gem 'email_reply_parser', git: 'https://github.com/lawrencepit/email_reply_parser.git'
 
 # note: for image_optim to correctly work you need
