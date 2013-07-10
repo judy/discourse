@@ -17,6 +17,7 @@
 
 <%# load the selected locale before any other scripts %>
 <%= javascript_include_tag "locales/#{I18n.locale}" %>
+<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.2.2/d3.v3.min.js"></script>
 <%= javascript_include_tag "application" %>
 <%- if staff? %>
   <%= javascript_include_tag "admin"%>

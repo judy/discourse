@@ -108,6 +108,7 @@ Discourse::Application.routes.draw do
   get 'faq' => 'static#show', id: 'faq'
   get 'tos' => 'static#show', id: 'tos'
   get 'privacy' => 'static#show', id: 'privacy'
+  get 'hypercube' => 'static#show', id: 'hypercube'
 
   get 'users/search/users' => 'users#search_users'
   get 'users/password-reset/:token' => 'users#password_reset'

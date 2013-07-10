@@ -1,0 +1,57 @@
+<form id="hypercube-options" style="float: left;">
+<ul>
+  <li>
+    <label>
+      <input type="checkbox" name="rotate_xz" />Rotate xz
+    </label>
+  </li>
+  <li>
+    <label>
+      <input type="checkbox" name="rotate_yz" />Rotate yz
+    </label>
+  </li>
+  <li>
+    <label>
+      <input type="checkbox" name="rotate_xw" />Rotate xw
+    </label>
+  </li>
+  <li>
+    <label>
+      <input type="checkbox" name="rotate_yw" />Rotate yw
+    </label>
+  </li>
+  <li>
+    <label>
+      <input type="checkbox" name="rotate_xy" />Rotate xy
+    </label>
+  </li>
+  <li>
+    <label>
+      <input type="checkbox" name="rotate_zw" />Rotate zw
+    </label>
+  </li>
+  </ul>
+</form>
+
+<canvas id="hypercube-canvas" width=400 height=400>I&rsquo;m sorry, but your browser does not support hypercubes. Please get with the times. (Use a browser that supports canvases.)</canvas>
+
+<script type="text/javascript">
+  // $(function() {
+    // color scale
+    // function color(d) {
+    //   var z = 0.5 + 0.3 * d.z;
+    //   var w = 151 + Math.floor(40*(d.w));
+    //   return "rgba(255," + w + ",0," + z + ")";
+    // };
+
+    // hypercube
+    window.cube = hypercube('hypercube-canvas');
+    window.cube.init();
+
+    // animation and chart linking
+    function anim(t) {
+      cube.draw();
+    }
+    d3.timer(anim);
+  // });
+</script>

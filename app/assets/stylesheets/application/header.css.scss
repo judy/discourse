@@ -19,6 +19,7 @@
   }
   .contents {
     margin: 10px 0;
+    position: relative;
   }
   .title {
     display: table;
@@ -31,6 +32,16 @@
   }
   #site-logo {
     width: 122px;
+    z-index: 2;
+    position: relative;
+  }
+  #hyperlogo {
+    position: absolute;
+    height: 60px;
+    width: 300px;
+    left: -80px;
+    top: -10px;
+    z-index: 1;
   }
   .icon-home {
     font-size: 20px;
