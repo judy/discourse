@@ -43,6 +43,7 @@ Discourse::Application.configure do
       :domain =>         'makespace.herokuapp.com',
       :authentication => :login
   }
+
   config.action_mailer.raise_delivery_errors = true
 
   BetterErrors::Middleware.allow_ip! ENV['TRUSTED_IP'] if ENV['TRUSTED_IP']

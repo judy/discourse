@@ -11,7 +11,7 @@
             <a {{bindAttr class=":star topic.starred:starred"}} {{action toggleStar}} href='#' {{bindAttr title="topic.favoriteTooltip"}}></a>
           {{/if}}
           <h1>
-          {{#if topic.fancy_title}}
+          {{#if topic.details.loaded}}
             {{topicStatus topic=topic}}
             <a class='topic-link' href='{{unbound topic.url}}'>{{{topic.fancy_title}}}</a>
           {{else}}
@@ -21,7 +21,7 @@
               {{i18n topic.loading}}
             {{/if}}
           {{/if}}
-          {{categoryLink topic.category}}
+          {{boundCategoryLink topic.category}}
           </h1>
         </div>
       </div>
@@ -123,7 +123,7 @@
         <li>
           {{#titledLinkTo "list.latest" titleKey="filters.latest.help"}}{{i18n filters.latest.title}}{{/titledLinkTo}}
         </li>
-        <li>{{#linkTo 'faq'}}{{i18n faq}}{{/linkTo}}</li>
+        <li>{{faqLink}}</li>
 
         {{#if categories}}
           <li class='heading' title="{{i18n filters.categories.help}}">

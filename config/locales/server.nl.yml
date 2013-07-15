@@ -16,7 +16,7 @@ nl:
   topics: Topics
   posts: berichten
   loading: Laden
-  powered_by_html: 'Powered by <a href="http://www.discourse.org">Discourse</a>, werkt het best JavaScript ingeschakeld'
+  powered_by_html: 'Powered by <a href="http://www.discourse.org">Discourse</a>, werkt het beste met JavaScript ingeschakeld'
 
   via: "%{username} via %{site_name}"
   is_reserved: is gereserveerd
@@ -574,8 +574,6 @@ nl:
     newuser_max_mentions_per_post: "Maximum aantal @naam notificaties dat een nieuw lid in een bericht kan gebruiken"
     max_mentions_per_post: "Maximum aantal @naam notificaties dat je in een bericht kan gebruiken"
 
-    auto_link_images_wider_than: "Afbeeldingen breder dan dit, in pixels, krijgen automatisch een link naar een lightbox"
-
     email_time_window_mins: "Hoeveel minuten we wachten met het sturen van een e-mail naar een persoon, om ze een kans te geven het eerst op de site te kunnen lezen."
     flush_timings_secs: "Hoe vaak we timing-data naar de server sturen, in seconden."
     max_word_length: "De maximumlengte van een woord in een topictitel"
@@ -970,6 +968,7 @@ nl:
   deleted: 'verwijderd'
 
   upload:
+    pasted_image_filename: ""
     image:
       fetch_failure: "Er ging iets mis bij het opvragen van de afbeelding."
       unknown_image_type: "Het bestand dat je wil uploaden is geen afbeelding."

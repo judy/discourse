@@ -22,7 +22,6 @@ class UserAction < ActiveRecord::Base
   ORDER = Hash[*[
     GOT_PRIVATE_MESSAGE,
     NEW_PRIVATE_MESSAGE,
-    BOOKMARK,
     NEW_TOPIC,
     REPLY,
     RESPONSE,
@@ -30,6 +29,7 @@ class UserAction < ActiveRecord::Base
     WAS_LIKED,
     MENTION,
     QUOTE,
+    BOOKMARK,
     STAR,
     EDIT
   ].each_with_index.to_a.flatten]
@@ -209,9 +209,9 @@ ORDER BY p.created_at desc
 
   def self.update_like_count(user_id, action_type, delta)
     if action_type == LIKE
-      User.update_all("likes_given = likes_given + #{delta.to_i}", id: user_id)
+      User.where(id: user_id).update_all("likes_given = likes_given + #{delta.to_i}")
     elsif action_type == WAS_LIKED
-      User.update_all("likes_received = likes_received + #{delta.to_i}", id: user_id)
+      User.where(id: user_id).update_all("likes_received = likes_received + #{delta.to_i}")
     end
   end
 

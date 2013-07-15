@@ -711,8 +711,7 @@ zh_CN:
         edit: "抱歉，在编辑你的帖子时发生了错误。请重试。"
         upload: "抱歉，在上传文件时发生了错误。请重试。"
         upload_too_large: "抱歉，你上传的文件太大了（最大不能超过 {{max_size_kb}}kb），请调整文件大小后重新上传。"
-        upload_too_many_images: "抱歉, 你只能一次上传一张图片。"
-        only_images_are_supported: "抱歉，你只能上传图片。"
+        too_many_uploads: "抱歉, 你只能一次上传一张图片。"
 
       abandon: "你确定要丢弃你的帖子吗？"
 
@@ -964,6 +963,7 @@ zh_CN:
         up_to_date: "你正在运行最新的论坛版本。"
         critical_available: "有一个关键更新可用。"
         updates_available: "目前有可用更新。"
+        no_check_performed: "检测未执行"
         please_upgrade: "请升级！"
         installed_version: "已安装"
         latest_version: "最新版本"
@@ -973,7 +973,8 @@ zh_CN:
         no_problems: "找不到问题."
         moderators: '版主：'
         admins: '管理员：'
-        blocked: '被封禁:'
+        blocked: '禁止参与讨论:'
+        banned: "禁止登陆"
         private_messages_short: "私信"
         private_messages_title: "私密信息"
 
@@ -1039,6 +1040,7 @@ zh_CN:
 
       email:
         title: "电子邮件"
+        user: "用户"
         settings: "设置"
         logs: "日志"
         sent_at: "发送时间"
@@ -1067,9 +1069,15 @@ zh_CN:
         create: '添加管理员用户'
         last_emailed: "最后一次邮寄"
         not_found: "抱歉，在我们的系统中此用户名不存在。"
-        new: "新建"
         active: "活跃"
-        pending: "待定"
+        nav:
+          new: "新建"
+          active: "活跃"
+          pending: "待定"
+          admins: "管理员"
+          moderators: "版主"
+          banned: "禁止登陆"
+          blocked: "禁止参与讨论"
         approved: "已批准？"
         approved_selected:
           one: "批准用户"

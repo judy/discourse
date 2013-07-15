@@ -137,6 +137,10 @@ class Guardian
     user && is_staff?
   end
 
+  def can_change_trust_level?(user)
+    can_administer?(user)
+  end
+
   def can_block_user?(user)
     user && is_staff? && not(user.staff?)
   end
@@ -238,7 +242,11 @@ class Guardian
   end
 
   def can_create_post_on_topic?(topic)
-    is_staff? || (not(topic.closed? || topic.archived?) && can_create_post?(topic))
+
+    # No users can create posts on deleted topics
+    return false if topic.trashed?
+
+    is_staff? || (not(topic.closed? || topic.archived? || topic.trashed?) && can_create_post?(topic))
   end
 
   # Editing Methods
@@ -255,7 +263,7 @@ class Guardian
   end
 
   def can_edit_topic?(topic)
-    is_staff? || is_my_own?(topic)
+    !topic.archived && (is_staff? || is_my_own?(topic))
   end
 
   # Deleting Methods
@@ -279,7 +287,9 @@ class Guardian
   end
 
   def can_delete_topic?(topic)
-    is_staff? && not(Category.exists?(topic_id: topic.id))
+    !topic.trashed? &&
+    is_staff? &&
+    !(Category.exists?(topic_id: topic.id))
   end
 
   def can_delete_post_action?(post_action)

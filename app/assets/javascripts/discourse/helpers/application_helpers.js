@@ -9,17 +9,7 @@ Handlebars.registerHelper('breakUp', function(property, options) {
   prop = Ember.Handlebars.get(this, property, options);
   if (!prop) return "";
 
-  tokens = prop.match(new RegExp(".{1,14}", 'g'));
-  if (tokens.length === 1) return prop;
-
-  result = "";
-  _.each(tokens,function(token,index) {
-    result += token;
-    if (token.indexOf(' ') === -1 && (index < tokens.length - 1)) {
-      result += "- ";
-    }
-  });
-  return result;
+  return Discourse.Formatter.breakUp(prop, 13);
 });
 
 /**
@@ -76,7 +66,7 @@ Ember.Handlebars.registerBoundHelper('boundCategoryLink', function(category) {
 Handlebars.registerHelper('titledLinkTo', function(name, object) {
   var options = [].slice.call(arguments, -1)[0];
   if (options.hash.titleKey) {
-    options.hash.title = Em.String.i18n(options.hash.titleKey);
+    options.hash.title = I18n.t(options.hash.titleKey);
   }
   if (arguments.length === 3) {
     return Ember.Handlebars.helpers.linkTo.call(this, name, object, options);
@@ -257,23 +247,31 @@ Ember.Handlebars.registerHelper('float', function(property, options) {
   @for Handlebars
 **/
 Handlebars.registerHelper('number', function(property, options) {
-  var n, orig, title;
+  var n, orig, title, result;
   orig = parseInt(Ember.Handlebars.get(this, property, options), 10);
   if (isNaN(orig)) {
     orig = 0;
   }
   title = orig;
   if (options.hash.numberKey) {
-    title = Em.String.i18n(options.hash.numberKey, {
+    title = I18n.t(options.hash.numberKey, {
       number: orig
     });
   }
   // Round off the thousands to one decimal place
   n = orig;
-  if (orig > 999) {
+  if (orig > 999 && !options.hash.noTitle) {
     n = (orig / 1000).toFixed(1) + "K";
   }
-  return new Handlebars.SafeString("<span class='number' title='" + title + "'>" + n + "</span>");
+
+  result = "<span class='number'";
+
+  if(n !== title) {
+    result += " title='" + title + "'";
+  }
+
+  result += ">" + n + "</span>";
+  return new Handlebars.SafeString(result);
 });
 
 /**
@@ -300,3 +298,16 @@ Handlebars.registerHelper('date', function(property, options) {
 
 });
 
+/**
+  Produces a link to the FAQ
+
+  @method faqLink
+  @for Handlebars
+**/
+Handlebars.registerHelper('faqLink', function(property, options) {
+  return new Handlebars.SafeString(
+    "<a href='" +
+    (Discourse.SiteSettings.faq_url.length > 0 ? Discourse.SiteSettings.faq_url : Discourse.getURL('/faq')) +
+    "'>" + I18n.t('faq') + "</a>"
+  );
+});

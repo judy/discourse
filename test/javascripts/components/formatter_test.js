@@ -22,15 +22,15 @@ var formatMonths = function(months) {
   return formatDays(months * 30);
 };
 
+var shortDate = function(days){
+  return moment().subtract('days', days).format('D MMM');
+};
+
 test("formating medium length dates", function() {
 
   format = "medium";
   var strip = function(html){
     return $(html).text();
-  };
-
-  var shortDate = function(days){
-    return moment().subtract('days', days).format('D MMM');
   };
 
   var shortDateYear = function(days){
@@ -74,10 +74,37 @@ test("formating tiny dates", function() {
   equal(formatMins(60), "1h");
   equal(formatHours(4), "4h");
   equal(formatDays(1), "1d");
-  equal(formatDays(20), "20d");
-  equal(formatMonths(3), "3mon");
-  equal(formatMonths(23), "23mon");
-  equal(formatMonths(24), "> 2y");
+  equal(formatDays(14), "14d");
+  equal(formatDays(15), shortDate(15));
+  equal(formatDays(92), shortDate(92));
+  equal(formatDays(364), shortDate(364));
+  equal(formatDays(365), "> 1y");
+  equal(formatDays(500), "> 1y");
+  equal(formatDays(365*2), "> 2y");
+
+  var originalValue = Discourse.SiteSettings.relative_date_duration;
+  Discourse.SiteSettings.relative_date_duration = 7;
+  equal(formatDays(7), "7d");
+  equal(formatDays(8), shortDate(8));
+
+  Discourse.SiteSettings.relative_date_duration = 1;
+  equal(formatDays(1), "1d");
+  equal(formatDays(2), shortDate(2));
+
+  Discourse.SiteSettings.relative_date_duration = 0;
+  equal(formatMins(0), "< 1m");
+  equal(formatMins(2), "2m");
+  equal(formatMins(60), "1h");
+  equal(formatDays(1), shortDate(1));
+  equal(formatDays(2), shortDate(2));
+  equal(formatDays(365), "> 1y");
+
+  Discourse.SiteSettings.relative_date_duration = null;
+  equal(formatDays(1), '1d');
+  equal(formatDays(14), '14d');
+  equal(formatDays(15), shortDate(15));
+
+  Discourse.SiteSettings.relative_date_duration = originalValue;
 });
 
 test("autoUpdatingRelativeAge", function() {
@@ -121,4 +148,16 @@ test("updateRelativeAge", function(){
   Discourse.Formatter.updateRelativeAge($elem);
 
   equal($elem.html(), "2 mins ago");
+});
+
+test("breakUp", function(){
+
+  var b = function(s){ return Discourse.Formatter.breakUp(s,5); };
+
+  equal(b("hello"), "hello");
+  equal(b("helloworld"), "hello world");
+  equal(b("HeMans"), "He Mans");
+  equal(b("he_man"), "he_ man");
+  equal(b("he11111"), "he 11111");
+
 });
