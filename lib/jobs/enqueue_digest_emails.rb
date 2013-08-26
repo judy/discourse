@@ -1,7 +1,8 @@
 module Jobs
 
   # A daily job that will enqueue digest emails to be sent to users
-  class EnqueueDigestEmails < Jobs::Base
+  class EnqueueDigestEmails < Jobs::Scheduled
+    recurrence { daily.hour_of_day(6) }
 
     def execute(args)
       target_users.each do |u|
@@ -10,9 +11,9 @@ module Jobs
     end
 
     def target_users
-      # Users who want to receive emails and haven't been emailed int he last day
+      # Users who want to receive emails and haven't been emailed in the last day
       query = User.select(:id)
-                  .where(email_digests: true)
+                  .where(email_digests: true, active: true)
                   .where("COALESCE(last_emailed_at, '2010-01-01') <= CURRENT_TIMESTAMP - ('1 DAY'::INTERVAL * digest_after_days)")
                   .where("COALESCE(last_seen_at, '2010-01-01') <= CURRENT_TIMESTAMP - ('1 DAY'::INTERVAL * digest_after_days)")
 

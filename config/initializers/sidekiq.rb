@@ -1,6 +1,11 @@
 sidekiq_redis = { url: $redis.url, namespace: 'sidekiq' }
 
-if Rails.env.production? 
+Sidekiq.configure_server do |config|
+  config.redis = sidekiq_redis
+  Sidetiq::Clock.start!
+end
+
+Sidekiq.configure_client { |config| config.redis = sidekiq_redis }
 
   require 'autoscaler/sidekiq'
   require 'autoscaler/heroku_scaler'

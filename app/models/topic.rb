@@ -51,7 +51,9 @@ class Topic < ActiveRecord::Base
     self.title = TextCleaner.clean_title(TextSentinel.title_sentinel(title).text) if errors[:title].empty?
   end
 
-  serialize :meta_data, ActiveRecord::Coders::Hstore
+  unless rails4?
+    serialize :meta_data, ActiveRecord::Coders::Hstore
+  end
 
   belongs_to :category
   has_many :posts
@@ -103,9 +105,9 @@ class Topic < ActiveRecord::Base
     # Query conditions
     condition =
       if ids.present?
-        ["NOT c.secure or c.id in (:cats)", cats: ids]
+        ["NOT c.read_restricted or c.id in (:cats)", cats: ids]
       else
-        ["NOT c.secure"]
+        ["NOT c.read_restricted"]
       end
 
     where("category_id IS NULL OR category_id IN (
@@ -130,7 +132,6 @@ class Topic < ActiveRecord::Base
 
   after_create do
     changed_to_category(category)
-    notifier.created_topic! user_id
     if archetype == Archetype.private_message
       DraftSequence.next!(user, Draft::NEW_PRIVATE_MESSAGE)
     else
@@ -199,7 +200,7 @@ class Topic < ActiveRecord::Base
       .created_since(since)
       .listable_topics
       .order(:percent_rank)
-      .limit(5)
+      .limit(100)
   end
 
   def update_meta_data(data)
@@ -250,7 +251,6 @@ class Topic < ActiveRecord::Base
          .listable_topics
          .limit(SiteSetting.max_similar_results)
          .order('similarity desc')
-         .all
   end
 
   def update_status(status, enabled, user)
@@ -468,26 +468,9 @@ class Topic < ActiveRecord::Base
 
   # Chooses which topic users to feature
   def feature_topic_users(args={})
-    reload
-
-    # Don't include the OP or the last poster
-    to_feature = posts.where('user_id NOT IN (?, ?)', user_id, last_post_user_id)
-
-    # Exclude a given post if supplied (in the case of deletes)
-    to_feature = to_feature.where("id <> ?", args[:except_post_id]) if args[:except_post_id].present?
-
-    # Clear the featured users by default
-    Topic.featured_users_count.times do |i|
-      send("featured_user#{i+1}_id=", nil)
-    end
-
-    # Assign the featured_user{x} columns
-    to_feature = to_feature.group(:user_id).order('count_all desc').limit(Topic.featured_users_count)
-
-    to_feature.count.keys.each_with_index do |user_id, i|
-      send("featured_user#{i+1}_id=", user_id)
-    end
-
+    reload unless rails4?
+    clear_featured_users
+    update_featured_users featured_user_keys(args)
     save
   end
 
@@ -629,8 +612,8 @@ class Topic < ActiveRecord::Base
     self
   end
 
-  def secure_category?
-    category && category.secure
+  def read_restricted_category?
+    category && category.read_restricted
   end
 
   private
@@ -638,6 +621,31 @@ class Topic < ActiveRecord::Base
     def update_category_topic_count_by(num)
       if category_id.present?
         Category.where(['id = ?', category_id]).update_all("topic_count = topic_count " + (num > 0 ? '+' : '') + "#{num}")
+      end
+    end
+
+    def featured_user_keys(args)
+      # Don't include the OP or the last poster
+      to_feature = posts.where('user_id NOT IN (?, ?)', user_id, last_post_user_id)
+
+      # Exclude a given post if supplied (in the case of deletes)
+      to_feature = to_feature.where("id <> ?", args[:except_post_id]) if args[:except_post_id].present?
+
+
+      # Assign the featured_user{x} columns
+      to_feature.group(:user_id).order('count_all desc').limit(Topic.featured_users_count).count.keys
+    end
+
+
+    def clear_featured_users
+      Topic.featured_users_count.times do |i|
+        send("featured_user#{i+1}_id=", nil)
+      end
+    end
+
+    def update_featured_users(user_keys)
+      user_keys.each_with_index do |user_id, i|
+        send("featured_user#{i+1}_id=", user_id)
       end
     end
 end
@@ -692,6 +700,7 @@ end
 #  auto_close_at           :datetime
 #  auto_close_user_id      :integer
 #  auto_close_started_at   :datetime
+#  deleted_by_id           :integer
 #
 # Indexes
 #

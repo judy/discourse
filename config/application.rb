@@ -41,7 +41,7 @@ module Discourse
 
     config.assets.paths += %W(#{config.root}/config/locales)
 
-    config.assets.precompile += ['admin.js', 'admin.css', 'shiny/shiny.css', 'preload_store.js', 'jquery.js']
+    config.assets.precompile += ['admin.js', 'admin.css', 'shiny/shiny.css', 'preload_store.js']
 
     # Precompile all defer
     Dir.glob("#{config.root}/app/assets/javascripts/defer/*.js").each do |file|
@@ -89,11 +89,12 @@ module Discourse
 
     # per https://www.owasp.org/index.php/Password_Storage_Cheat_Sheet
     config.pbkdf2_iterations = 64000
+    config.pbkdf2_algorithm = "sha256"
 
     # dumping rack lock cause the message bus does not work with it (throw :async, it catches Exception)
     # see: https://github.com/sporkrb/spork/issues/66
     # rake assets:precompile also fails
-    config.threadsafe! unless $PROGRAM_NAME =~ /spork|rake/
+    config.threadsafe! unless rails4? || $PROGRAM_NAME =~ /spork|rake/
 
     # route all exceptions via our router
     config.exceptions_app = self.routes
@@ -112,27 +113,20 @@ module Discourse
     # ember stuff only used for asset precompliation, production variant plays up
     config.ember.variant = :development
     config.ember.ember_location = "#{Rails.root}/app/assets/javascripts/external_production/ember.js"
-    config.ember.handlebars_location = "#{Rails.root}/app/assets/javascripts/external/handlebars-1.0.rc.4.js"
+    config.ember.handlebars_location = "#{Rails.root}/app/assets/javascripts/external/handlebars.js"
 
     # Since we are using strong_parameters, we can disable and remove
     # attr_accessible.
     config.active_record.whitelist_attributes = false
 
+    unless Rails.env.test?
+      require 'plugin'
+      Discourse.activate_plugins!
+    end
+
     # So open id logs somewhere sane
     config.after_initialize do
       OpenID::Util.logger = Rails.logger
-
-      if ENV['EMBED_CLOCKWORK']
-        puts ">> Running clockwork in background thread"
-        require_relative "clock"
-
-        Thread.new do
-          Clockwork.run
-        end
-      end
-
     end
-
-
   end
 end

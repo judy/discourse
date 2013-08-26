@@ -13,6 +13,10 @@ Discourse.AdminUsersListController = Ember.ArrayController.extend(Discourse.Pres
   content: null,
   loading: false,
 
+  queryNew: Em.computed.equal('query', 'new'),
+  queryPending: Em.computed.equal('query', 'pending'),
+  queryHasApproval: Em.computed.or('queryNew', 'queryPending'),
+
   /**
     Triggered when the selectAll property is changed
 
@@ -58,10 +62,8 @@ Discourse.AdminUsersListController = Ember.ArrayController.extend(Discourse.Pres
     @property showApproval
   **/
   showApproval: function() {
-    if (!Discourse.SiteSettings.must_approve_users) return false;
-    if (this.get('query') === 'new') return true;
-    if (this.get('query') === 'pending') return true;
-  }.property('query'),
+    return Discourse.SiteSettings.must_approve_users && this.get('queryHasApproval');
+  }.property('queryPending'),
 
   /**
     How many users are currently selected
@@ -78,9 +80,7 @@ Discourse.AdminUsersListController = Ember.ArrayController.extend(Discourse.Pres
 
     @property hasSelection
   **/
-  hasSelection: function() {
-    return this.get('selectedCount') > 0;
-  }.property('selectedCount'),
+  hasSelection: Em.computed.gt('selectedCount', 0),
 
   /**
     Refresh the current list of users.
@@ -119,6 +119,24 @@ Discourse.AdminUsersListController = Ember.ArrayController.extend(Discourse.Pres
   approveUsers: function() {
     Discourse.AdminUser.bulkApprove(this.get('content').filterProperty('selected'));
     this.refreshUsers();
+  },
+
+  /**
+    Reject all the currently selected users.
+
+    @method rejectUsers
+  **/
+  rejectUsers: function() {
+    var controller = this;
+    Discourse.AdminUser.bulkReject(this.get('content').filterProperty('selected')).then(function(result){
+      var message = I18n.t("admin.users.reject_successful", {count: result.success});
+      if (result.failed > 0) {
+        message += ' ' + I18n.t("admin.users.reject_failures", {count: result.failed});
+        message += ' ' + I18n.t("admin.user.delete_forbidden", {count: Discourse.SiteSettings.delete_user_max_age});
+      }
+      bootbox.alert(message);
+      controller.refreshUsers();
+    });
   }
 
 });

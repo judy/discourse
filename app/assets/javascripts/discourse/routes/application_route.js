@@ -26,12 +26,9 @@ Discourse.ApplicationRoute = Em.Route.extend({
       this.controllerFor('notActivated').setProperties(props);
     },
 
-    showImageSelector: function(composerView) {
-      Discourse.Route.showModal(this, 'imageSelector');
-      this.controllerFor('imageSelector').setProperties({
-        localSelected: true,
-        composerView: composerView
-      });
+    showUploadSelector: function(composerView) {
+      Discourse.Route.showModal(this, 'uploadSelector');
+      this.controllerFor('uploadSelector').setProperties({ composerView: composerView });
     },
 
 
@@ -52,7 +49,7 @@ Discourse.ApplicationRoute = Em.Route.extend({
         router.controllerFor('editCategory').set('selectedTab', 'general');
       } else {
         Discourse.Category.findBySlugOrId(category.get('slug') || category.get('id')).then(function (c) {
-          Discourse.Site.instance().updateCategory(c);
+          Discourse.Site.current().updateCategory(c);
           Discourse.Route.showModal(router, 'editCategory', c);
           router.controllerFor('editCategory').set('selectedTab', 'general');
         });

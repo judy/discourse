@@ -3,12 +3,12 @@ require_dependency 'promotion'
 
 class TopicsController < ApplicationController
 
-  # Avatar is an image request, not XHR
   before_filter :ensure_logged_in, only: [:timings,
                                           :destroy_timings,
                                           :update,
                                           :star,
                                           :destroy,
+                                          :recover,
                                           :status,
                                           :invite,
                                           :mute,
@@ -21,8 +21,7 @@ class TopicsController < ApplicationController
 
   before_filter :consider_user_for_promotion, only: :show
 
-  skip_before_filter :check_xhr, only: [:avatar, :show, :feed]
-  caches_action :avatar, cache_path: Proc.new {|c| "#{c.params[:post_number]}-#{c.params[:topic_id]}" }
+  skip_before_filter :check_xhr, only: [:show, :feed]
 
   def show
 
@@ -126,7 +125,7 @@ class TopicsController < ApplicationController
 
     # Only suggest similar topics if the site has a minimmum amount of topics present.
     if Topic.count > SiteSetting.minimum_topics_similar
-      topics = Topic.similar_to(title, raw, current_user)
+      topics = Topic.similar_to(title, raw, current_user).to_a
     end
 
     render_serialized(topics, BasicTopicSerializer)
@@ -172,6 +171,13 @@ class TopicsController < ApplicationController
     topic = Topic.where(id: params[:id]).first
     guardian.ensure_can_delete!(topic)
     topic.trash!(current_user)
+    render nothing: true
+  end
+
+  def recover
+    topic = Topic.where(id: params[:topic_id]).with_deleted.first
+    guardian.ensure_can_recover_topic!(topic)
+    topic.recover!
     render nothing: true
   end
 

@@ -80,6 +80,11 @@ describe PostAnalyzer do
         post_analyzer = PostAnalyzer.new(raw_three_links, default_topic_id)
         post_analyzer.linked_hosts.should == {"discourse.org" => 1, "www.imdb.com" => 1}
       end
+
+      it 'returns blank for ipv6 output' do
+        post_analyzer = PostAnalyzer.new('PING www.google.com(lb-in-x93.1e100.net) 56 data bytes', default_topic_id)
+        post_analyzer.linked_hosts.should be_blank
+      end
     end
   end
 
@@ -181,6 +186,11 @@ describe PostAnalyzer do
     it "ignores code" do
       post_analyzer = PostAnalyzer.new("@Jake <code>@Finn</code>", default_topic_id)
       post_analyzer.raw_mentions.should == ['jake']
+    end
+
+    it "ignores code in markdown-formatted code blocks" do
+      post_analyzer = PostAnalyzer.new("    @Jake @Finn\n@Ryan", default_topic_id)
+      post_analyzer.raw_mentions.should == ['ryan']
     end
 
     it "ignores quotes" do

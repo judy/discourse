@@ -141,6 +141,9 @@ Discourse.TopicController = Discourse.ObjectController.extend(Discourse.Selected
 
       var topic = this.get('model');
 
+      // Topic title hasn't been sanitized yet, so the template shouldn't trust it.
+      this.set('topicSaving', true);
+
       // manually update the titles & category
       topic.setProperties({
         title: this.get('newTitle'),
@@ -157,9 +160,10 @@ Discourse.TopicController = Discourse.ObjectController.extend(Discourse.Selected
           title: title,
           fancy_title: fancy_title
         });
-
+        topicController.set('topicSaving', false);
       }, function(error) {
         topicController.set('editingTopic', true);
+        topicController.set('topicSaving', false);
         if (error && error.responseText) {
           bootbox.alert($.parseJSON(error.responseText).errors[0]);
         } else {
@@ -184,7 +188,7 @@ Discourse.TopicController = Discourse.ObjectController.extend(Discourse.Selected
 
         var selectedPosts = topicController.get('selectedPosts');
         Discourse.Post.deleteMany(selectedPosts);
-        topicController.get('content.posts').removeObjects(selectedPosts);
+        topicController.get('model.postStream').removePosts(selectedPosts);
         topicController.toggleMultiSelect();
       }
     });
@@ -199,43 +203,6 @@ Discourse.TopicController = Discourse.ObjectController.extend(Discourse.Selected
   },
 
 
-
-  replyAsNewTopic: function(post) {
-    // TODO shut down topic draft cleanly if it exists ...
-    var composerController = this.get('controllers.composer');
-    var promise = composerController.open({
-      action: Discourse.Composer.CREATE_TOPIC,
-      draftKey: Discourse.Composer.REPLY_AS_NEW_TOPIC_KEY
-    });
-    var postUrl = "" + location.protocol + "//" + location.host + (post.get('url'));
-    var postLink = "[" + (this.get('title')) + "](" + postUrl + ")";
-
-    promise.then(function() {
-      Discourse.Post.loadQuote(post.get('id')).then(function(q) {
-        composerController.appendText("" + (I18n.t("post.continue_discussion", {
-          postLink: postLink
-        })) + "\n\n" + q);
-      });
-    });
-  },
-
-  // Topic related
-  reply: function() {
-    var composerController = this.get('controllers.composer');
-    if (composerController.get('content.topic.id') === this.get('content.id') &&
-        composerController.get('content.action') === Discourse.Composer.REPLY) {
-      composerController.set('content.post', null);
-      composerController.set('content.composeState', Discourse.Composer.OPEN);
-    } else {
-      composerController.open({
-        topic: this.get('content'),
-        action: Discourse.Composer.REPLY,
-        draftKey: this.get('content.draft_key'),
-        draftSequence: this.get('content.draft_sequence')
-      });
-    }
-  },
-
   /**
     Toggle a participant for filtering
 
@@ -249,13 +216,17 @@ Discourse.TopicController = Discourse.ObjectController.extend(Discourse.Selected
     return Discourse.User.current() && !this.get('isPrivateMessage');
   }.property('isPrivateMessage'),
 
+  recoverTopic: function() {
+    this.get('content').recover();
+  },
+
   deleteTopic: function() {
     this.unsubscribe();
     this.get('content').destroy(Discourse.User.current());
   },
 
   resetRead: function() {
-    Discourse.ScreenTrack.instance().reset();
+    Discourse.ScreenTrack.current().reset();
     this.unsubscribe();
 
     var topicController = this;
@@ -286,8 +257,27 @@ Discourse.TopicController = Discourse.ObjectController.extend(Discourse.Selected
   },
 
   // Toggle the star on the topic
-  toggleStar: function(e) {
+  toggleStar: function() {
     this.get('content').toggleStar();
+  },
+
+  /**
+    Toggle the replies this post is a reply to
+
+    @method showReplyHistory
+  **/
+  toggleReplyHistory: function(post) {
+    var replyHistory = post.get('replyHistory'),
+        topicController = this;
+
+    if (replyHistory.length > 0) {
+      replyHistory.clear();
+    } else {
+      post.set('loadingReplyHistory', true);
+      topicController.get('postStream').findReplyHistory(post).then(function () {
+        post.set('loadingReplyHistory', false);
+      });
+    }
   },
 
   /**
@@ -333,24 +323,58 @@ Discourse.TopicController = Discourse.ObjectController.extend(Discourse.Selected
   replyToPost: function(post) {
     var composerController = this.get('controllers.composer');
     var quoteController = this.get('controllers.quoteButton');
-    var quotedText = Discourse.BBCode.buildQuoteBBCode(quoteController.get('post'), quoteController.get('buffer'));
+    var quotedText = Discourse.Quote.build(quoteController.get('post'), quoteController.get('buffer'));
+
+    var topic = post ? post.get('topic') : this.get('model');
+
     quoteController.set('buffer', '');
 
-    if (composerController.get('content.topic.id') === post.get('topic.id') &&
+    if (composerController.get('content.topic.id') === topic.get('id') &&
         composerController.get('content.action') === Discourse.Composer.REPLY) {
       composerController.set('content.post', post);
       composerController.set('content.composeState', Discourse.Composer.OPEN);
       composerController.appendText(quotedText);
     } else {
-      var promise = composerController.open({
-        post: post,
+
+      var opts = {
         action: Discourse.Composer.REPLY,
-        draftKey: post.get('topic.draft_key'),
-        draftSequence: post.get('topic.draft_sequence')
-      });
+        draftKey: topic.get('draft_key'),
+        draftSequence: topic.get('draft_sequence')
+      };
+
+      if(post && post.get("post_number") !== 1){
+        opts.post = post;
+      } else {
+        opts.topic = topic;
+      }
+
+      var promise = composerController.open(opts);
       promise.then(function() { composerController.appendText(quotedText); });
     }
     return false;
+  },
+
+  replyAsNewTopic: function(post) {
+    var composerController = this.get('controllers.composer');
+    var promise = composerController.open({
+      action: Discourse.Composer.CREATE_TOPIC,
+      draftKey: Discourse.Composer.REPLY_AS_NEW_TOPIC_KEY
+    });
+    var postUrl = "" + location.protocol + "//" + location.host + (post.get('url'));
+    var postLink = "[" + (this.get('title')) + "](" + postUrl + ")";
+
+    promise.then(function() {
+      Discourse.Post.loadQuote(post.get('id')).then(function(q) {
+        composerController.appendText(I18n.t("post.continue_discussion", {
+          postLink: postLink
+        }) + "\n\n" + q);
+      });
+    });
+  },
+
+  // Topic related
+  reply: function() {
+    this.replyToPost();
   },
 
   // Edits a post
@@ -382,7 +406,6 @@ Discourse.TopicController = Discourse.ObjectController.extend(Discourse.Selected
   },
 
   recoverPost: function(post) {
-    post.set('deleted_at', null);
     post.recover();
   },
 

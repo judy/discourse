@@ -1,5 +1,6 @@
 require_dependency 'guardian'
 require_dependency 'topic_query'
+require_dependency 'filter_best_posts'
 require_dependency 'summarize'
 
 class TopicView
@@ -10,32 +11,18 @@ class TopicView
   def initialize(topic_id, user=nil, options={})
     @user = user
     @topic = find_topic(topic_id)
-
-    raise Discourse::NotFound if @topic.blank?
-
     @guardian = Guardian.new(@user)
+    check_and_raise_exceptions
 
-    # Special case: If the topic is private and the user isn't logged in, ask them
-    # to log in!
-    if @topic.present? && @topic.private_message? && @user.blank?
-      raise Discourse::NotLoggedIn.new
+    options.each do |key, value|
+        self.instance_variable_set("@#{key}".to_sym, value)
     end
-    guardian.ensure_can_see!(@topic)
 
-    @post_number, @page = options[:post_number], options[:page].to_i
-    @page = 1 if @page == 0
+    @page = @page.to_i
+    @page = 1 if @page.zero?
+    @limit ||= SiteSetting.posts_per_page
 
-    @limit = options[:limit] || SiteSetting.posts_per_page;
-
-    @filtered_posts = @topic.posts
-    @filtered_posts = @filtered_posts.with_deleted.without_nuked_users if user.try(:staff?)
-    @filtered_posts = @filtered_posts.best_of if options[:filter] == 'best_of'
-    @filtered_posts = @filtered_posts.where('posts.post_type <> ?', Post.types[:moderator_action]) if options[:best].present?
-
-    if options[:username_filters].present?
-      usernames = options[:username_filters].map{|u| u.downcase}
-      @filtered_posts = @filtered_posts.where('post_number = 1 or user_id in (select u.id from users u where username_lower in (?))', usernames)
-    end
+    setup_filtered_posts
 
     @initial_load = true
     @index_reverse = false
@@ -126,34 +113,11 @@ class TopicView
   # Filter to all posts near a particular post number
   def filter_posts_near(post_number)
 
-    # Find the closest number we have
-    closest_post_id = @filtered_posts.order("@(post_number - #{post_number})").first.try(:id)
-    return nil if closest_post_id.blank?
-
-    closest_index = filtered_post_ids.index(closest_post_id)
-    return nil if closest_index.blank?
-
-    # Make sure to get at least one post before, even with rounding
-    posts_before = (SiteSetting.posts_per_page.to_f / 4).floor
-    posts_before = 1 if posts_before == 0
-
-    min_idx = closest_index - posts_before
-    min_idx = 0 if min_idx < 0
-    max_idx = min_idx + (SiteSetting.posts_per_page - 1)
-
-    # Get a full page even if at the end
-    upper_limit = (filtered_post_ids.length - 1)
-    if max_idx >= upper_limit
-      max_idx = upper_limit
-      min_idx = (upper_limit - SiteSetting.posts_per_page) + 1
-    end
+    min_idx, max_idx = get_minmax_ids(post_number)
 
     filter_posts_in_range(min_idx, max_idx)
   end
 
-  def filtered_post_ids
-    @filtered_post_ids ||= @filtered_posts.order(:sort_order).pluck(:id)
-  end
 
   def filter_posts_paged(page)
     page = [page, 1].max
@@ -163,46 +127,10 @@ class TopicView
     filter_posts_in_range(min, max)
   end
 
-
   def filter_best(max, opts={})
-    if opts[:min_replies] && @topic.posts_count < opts[:min_replies] + 1
-      @posts = []
-      return
-    end
-
-
-    if opts[:only_moderator_liked]
-      liked_by_moderators = PostAction.where(post_id: @filtered_posts.pluck(:id), post_action_type_id: PostActionType.types[:like])
-      liked_by_moderators = liked_by_moderators.joins(:user).where('users.moderator').pluck(:post_id)
-      @filtered_posts = @filtered_posts.where(id: liked_by_moderators)
-    end
-
-    @posts = @filtered_posts.order('percent_rank asc, sort_order asc').where("post_number > 1")
-    @posts = @posts.includes(:reply_to_user).includes(:topic).joins(:user).limit(max)
-
-    min_trust_level = opts[:min_trust_level]
-    if min_trust_level && min_trust_level > 0
-
-      bypass_trust_level_score = opts[:bypass_trust_level_score]
-
-      if bypass_trust_level_score && bypass_trust_level_score > 0
-        @posts = @posts.where('COALESCE(users.trust_level,0) >= ? OR posts.score >= ?',
-                    min_trust_level,
-                    bypass_trust_level_score
-                 )
-      else
-        @posts = @posts.where('COALESCE(users.trust_level,0) >= ?', min_trust_level)
-      end
-    end
-
-    min_score = opts[:min_score]
-    if min_score && min_score > 0
-      @posts = @posts.where('posts.score >= ?', min_score)
-    end
-
-    @posts = @posts.to_a
-    @posts.sort!{|a,b| a.post_number <=> b.post_number}
-    @posts
+    filter = FilterBestPosts.new(@topic, @filtered_posts, max, opts)
+    @posts = filter.posts
+    @filtered_posts = filter.filtered_posts
   end
 
   def read?(post_number)
@@ -273,6 +201,10 @@ class TopicView
     end
   end
 
+  def filtered_post_ids
+    @filtered_post_ids ||= filter_post_ids_by(:sort_order)
+  end
+
   protected
 
   def read_posts_set
@@ -321,4 +253,63 @@ class TopicView
     finder = finder.with_deleted if @user.try(:staff?)
     finder.first
   end
+
+  def setup_filtered_posts
+    @filtered_posts = @topic.posts
+    @filtered_posts = @filtered_posts.with_deleted.without_nuked_users if @user.try(:staff?)
+    @filtered_posts = @filtered_posts.best_of if @filter == 'best_of'
+    @filtered_posts = @filtered_posts.where('posts.post_type <> ?', Post.types[:moderator_action]) if @best.present?
+    return unless @username_filters.present?
+    usernames = @username_filters.map{|u| u.downcase}
+    @filtered_posts = @filtered_posts.where('post_number = 1 or user_id in (select u.id from users u where username_lower in (?))', usernames)
+  end
+
+  def check_and_raise_exceptions
+    raise Discourse::NotFound if @topic.blank?
+    # Special case: If the topic is private and the user isn't logged in, ask them
+    # to log in!
+    if @topic.present? && @topic.private_message? && @user.blank?
+      raise Discourse::NotLoggedIn.new
+    end
+    guardian.ensure_can_see!(@topic)
+  end
+
+
+  def filter_post_ids_by(sort_order)
+    @filtered_posts.order(sort_order).pluck(:id)
+  end
+
+  def get_minmax_ids(post_number)
+    # Find the closest number we have
+    closest_index = closest_post_to(post_number)
+    return nil if closest_index.nil?
+
+    # Make sure to get at least one post before, even with rounding
+    posts_before = (SiteSetting.posts_per_page.to_f / 4).floor
+    posts_before = 1 if posts_before.zero?
+
+    min_idx = closest_index - posts_before
+    min_idx = 0 if min_idx < 0
+    max_idx = min_idx + (SiteSetting.posts_per_page - 1)
+
+    # Get a full page even if at the end
+    ensure_full_page(min_idx, max_idx)
+  end
+
+  def ensure_full_page(min, max)
+    upper_limit = (filtered_post_ids.length - 1)
+    if max >= upper_limit
+      return (upper_limit - SiteSetting.posts_per_page) + 1, upper_limit
+    else
+      return min, max
+    end
+  end
+
+  def closest_post_to(post_number)
+    closest_posts = filter_post_ids_by("@(post_number - #{post_number})")
+    return nil if closest_posts.empty?
+
+    filtered_post_ids.index(closest_posts.first)
+  end
+
 end

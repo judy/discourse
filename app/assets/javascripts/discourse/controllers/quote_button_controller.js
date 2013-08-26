@@ -100,10 +100,15 @@ Discourse.QuoteButtonController = Discourse.Controller.extend({
     var post = this.get('post');
     var composerController = this.get('controllers.composer');
     var composerOpts = {
-      post: post,
       action: Discourse.Composer.REPLY,
       draftKey: this.get('post.topic.draft_key')
     };
+
+    if(post.get('post_number') === 1) {
+      composerOpts.topic = post.get("topic");
+    } else {
+      composerOpts.post = post;
+    }
 
     // If the composer is associated with a different post, we don't change it.
     var composerPost = composerController.get('content.post');
@@ -112,7 +117,7 @@ Discourse.QuoteButtonController = Discourse.Controller.extend({
     }
 
     var buffer = this.get('buffer');
-    var quotedText = Discourse.BBCode.buildQuoteBBCode(post, buffer);
+    var quotedText = Discourse.Quote.build(post, buffer);
     if (composerController.get('content.replyDirty')) {
       composerController.appendText(quotedText);
     } else {
