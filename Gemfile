@@ -82,7 +82,7 @@ gem 'fastimage'
 gem 'fog', require: false
 
 # Scale back heroku jobs when not being used.
-gem 'autoscaler', require: false
+gem 'autoscaler', '0.5.0', require: false
 
 gem 'email_reply_parser', git: 'https://github.com/lawrencepit/email_reply_parser.git'
 
