@@ -18,7 +18,8 @@ Discourse.Dialect.on("register", function(event) {
     @return {Array} the JsonML containing the markup or undefined if nothing changed.
     @namespace Discourse.Dialect
   **/
-  dialect.block['github_code'] = function githubCode(block, next) {
+  dialect.block.github_code = function githubCode(block, next) {
+
     var m = /^`{3}([^\n]+)?\n?([\s\S]*)?/gm.exec(block);
 
     if (m) {
@@ -61,7 +62,7 @@ Discourse.Dialect.on("register", function(event) {
             next.unshift(MD.mk_block(n[2]));
           }
 
-          codeContents.push(n[1].trim());
+          codeContents.push(n[1].replace(/\s+$/, ""));
           break;
         } else {
           codeContents.push(b);
@@ -83,10 +84,48 @@ Discourse.Dialect.on("register", function(event) {
   @namespace Discourse.Dialect
 **/
 Discourse.Dialect.on("parseNode", function(event) {
-  var node = event.node,
-      path = event.path;
+  var node = event.node;
 
   if (node[0] === 'code') {
     node[node.length-1] = Handlebars.Utils.escapeExpression(node[node.length-1]);
+  }
+});
+
+
+Discourse.Dialect.on("parseNode", function(event) {
+
+  var node = event.node,
+      opts = event.dialect.options,
+      insideCounts = event.insideCounts,
+      linebreaks = opts.traditional_markdown_linebreaks || Discourse.SiteSettings.traditional_markdown_linebreaks;
+
+  if (!linebreaks) {
+    // We don't add line breaks inside a pre
+    if (insideCounts.pre > 0) { return; }
+
+    if (node.length > 1) {
+      for (var j=1; j<node.length; j++) {
+        var textContent = node[j];
+
+        if (typeof textContent === "string") {
+
+          if (textContent === "\n") {
+            node[j] = ['br'];
+          } else {
+            var split = textContent.split(/\n+/);
+            if (split.length) {
+              var spliceInstructions = [j, 1];
+              for (var i=0; i<split.length; i++) {
+                if (split[i].length > 0) {
+                  spliceInstructions.push(split[i]);
+                  if (i !== split.length-1) { spliceInstructions.push(['br']); }
+                }
+              }
+              node.splice.apply(node, spliceInstructions);
+            }
+          }
+        }
+      }
+    }
   }
 });

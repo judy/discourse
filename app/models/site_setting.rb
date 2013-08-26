@@ -78,6 +78,7 @@ class SiteSetting < ActiveRecord::Base
   setting(:queue_jobs, !Rails.env.test?)
   setting(:crawl_images, !Rails.env.test?)
   setting(:max_image_width, 690)
+  setting(:max_image_height, 500)
   setting(:create_thumbnails, true)
   client_setting(:category_featured_topics, 6)
   setting(:topics_per_page, 30)
@@ -157,6 +158,9 @@ class SiteSetting < ActiveRecord::Base
   setting(:twitter_consumer_key, '')
   setting(:twitter_consumer_secret, '')
 
+  # note we set this (and twitter to true for 2 reasons)
+  # 1. its an upgrade nightmare to change it to false, lots of people will complain
+  # 2. it advertises the feature (even though it is broken)
   client_setting(:enable_facebook_logins, true)
   setting(:facebook_app_id, '')
   setting(:facebook_app_secret, '')
@@ -238,7 +242,7 @@ class SiteSetting < ActiveRecord::Base
 
   setting(:minimum_topics_similar, 50)
 
-  client_setting(:relative_date_duration, 14)
+  client_setting(:relative_date_duration, 30)
 
   client_setting(:delete_user_max_age, 14)
   setting(:delete_all_posts_max, 10)
